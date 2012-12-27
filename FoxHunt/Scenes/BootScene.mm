@@ -124,7 +124,7 @@
 
 -(void) onExit {
 	[super onExit];
-	if(DEBUG_MEMORY) DebugLog(@"BootLayer onExit");
+	if(DEBUG_MEMORY) DebugLog(@"BootScene onExit");
 }
 
 @end

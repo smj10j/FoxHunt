@@ -35,6 +35,26 @@
 		//CGSize winSize = [CCDirector sharedDirector].winSize;
 		
 		_fixedTimestepAccumulator = 0;
+
+		CGSize winSize = [CCDirector sharedDirector].winSize;
+		[LevelHelperLoader dontStretchArt];
+
+		//create a LevelHelperLoader object that has the data of the specified level
+		_levelLoader = [[LevelHelperLoader alloc] initWithContentOfFile:[NSString stringWithFormat:@"Levels/Empty"]];
+		
+		//create all objects from the level file and adds them to the cocos2d layer (self)
+		[_levelLoader addObjectsToWorld:_world cocos2dLayer:self];
+
+		_levelSize = winSize.width < _levelLoader.gameWorldSize.size.width ? _levelLoader.gameWorldSize.size : winSize;
+		DebugLog(@"Level size: %f x %f", _levelSize.width, _levelSize.height);
+
+		_mainLayer = [_levelLoader layerWithUniqueName:@"MAIN_LAYER"];
+
+		//checks if the level has physics boundaries
+		if([_levelLoader hasPhysicBoundaries]) {
+			//if it does, it will create the physic boundaries
+			[_levelLoader createPhysicBoundaries:_world];
+		}	
 		
 
 		// init physics
@@ -48,9 +68,7 @@
 }
 
 -(void) initPhysics {
-	
-	CGSize s = [[CCDirector sharedDirector] winSize];
-	
+		
 	b2Vec2 gravity;
 	gravity.Set(0.0f, -10.0f);
 	_world = new b2World(gravity);
@@ -60,7 +78,12 @@
 	_world->SetAllowSleeping(true);
 	
 	_world->SetContinuousPhysics(true);
-	
+}
+
+-(void) createGround {
+
+	CGSize s = [[CCDirector sharedDirector] winSize];
+
 	// Define the ground body.
 	b2BodyDef groundBodyDef;
 	groundBodyDef.position.Set(0, 0); // bottom-left corner
@@ -74,7 +97,6 @@
 	b2EdgeShape groundBox;		
 	
 	// bottom
-	
 	groundBox.Set(b2Vec2(0,0), b2Vec2(s.width/PTM_RATIO,0));
 	groundBody->CreateFixture(&groundBox,0);
 	
@@ -156,7 +178,7 @@
 
 
 -(void) onExit {
-	if(DEBUG_MEMORY) DebugLog(@"HelloWorldLayer onExit");
+	if(DEBUG_MEMORY) DebugLog(@"GameScene onExit");
 
 	for(LHSprite* sprite in _levelLoader.allSprites) {
 		[sprite stopAnimation];
@@ -165,8 +187,9 @@
 	[super onExit];
 }
 
+
 -(void) dealloc {
-	if(DEBUG_MEMORY) DebugLog(@"HelloWorldLayer dealloc");
+	if(DEBUG_MEMORY) DebugLog(@"GameScene dealloc");
 	if(DEBUG_MEMORY) report_memory();
 	
 	[_levelLoader removeAllPhysics];
@@ -178,9 +201,8 @@
 			
 	[super dealloc];
 	
-	if(DEBUG_MEMORY) DebugLog(@"End HelloWorldLayer dealloc");
+	if(DEBUG_MEMORY) DebugLog(@"End GameScene dealloc");
 	if(DEBUG_MEMORY) report_memory();
 }
-
 
 @end

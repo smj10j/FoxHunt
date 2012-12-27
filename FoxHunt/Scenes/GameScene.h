@@ -19,6 +19,9 @@
 
 	float _fixedTimestepAccumulator;
 	
+	CGSize _levelSize;
+	LHLayer* _mainLayer;
+
 	
 	
 }
