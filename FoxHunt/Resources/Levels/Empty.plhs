@@ -11,7 +11,7 @@
 	<key>JOINTS_INFO</key>
 	<array/>
 	<key>LHVersion</key>
-	<string>1.4.971</string>
+	<string>1.4.976</string>
 	<key>NODES_INFO</key>
 	<array>
 		<dict>
@@ -45,7 +45,7 @@
 		<key>2HDSuffix</key>
 		<string>-ipadhd</string>
 		<key>BackgroundColor</key>
-		<string>{{0, 0}, {0, -1.9262463628725745e+279}}</string>
+		<string>{{0, 0}, {0, 0}}</string>
 		<key>BundleIdentifier</key>
 		<string></string>
 		<key>CustomClasses</key>
@@ -61,11 +61,11 @@
 		<key>PanValue</key>
 		<string>{0, 0}</string>
 		<key>ProjectName</key>
-		<string>Outlaw</string>
+		<string></string>
 		<key>ProjectPath</key>
-		<string>/Users/Steve/Code/Conquer/Outlaw/Outlaw/Resources/Levels</string>
+		<string>/Users/Steve/Code/Conquer/FoxHunt</string>
 		<key>SafeFrame</key>
-		<string>{480, 320}</string>
+		<string>{0, 0}</string>
 		<key>Tags</key>
 		<array>
 			<string>DEFAULT</string>

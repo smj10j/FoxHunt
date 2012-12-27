@@ -38,6 +38,10 @@
 
 		CGSize winSize = [CCDirector sharedDirector].winSize;
 		[LevelHelperLoader dontStretchArt];
+		
+		// init physics
+		[self initPhysics];
+		[self createGround];
 
 		//create a LevelHelperLoader object that has the data of the specified level
 		_levelLoader = [[LevelHelperLoader alloc] initWithContentOfFile:[NSString stringWithFormat:@"Levels/Empty"]];
@@ -45,10 +49,11 @@
 		//create all objects from the level file and adds them to the cocos2d layer (self)
 		[_levelLoader addObjectsToWorld:_world cocos2dLayer:self];
 
+		_mainLayer = [_levelLoader layerWithUniqueName:@"MAIN_LAYER"];
+
 		_levelSize = winSize.width < _levelLoader.gameWorldSize.size.width ? _levelLoader.gameWorldSize.size : winSize;
 		DebugLog(@"Level size: %f x %f", _levelSize.width, _levelSize.height);
 
-		_mainLayer = [_levelLoader layerWithUniqueName:@"MAIN_LAYER"];
 
 		//checks if the level has physics boundaries
 		if([_levelLoader hasPhysicBoundaries]) {
@@ -57,14 +62,21 @@
 		}	
 		
 
-		// init physics
-		[self initPhysics];
 		
-		
+		[self setupTest];
 		
 		[self scheduleUpdate];
 	}
 	return self;
+}
+
+-(void) setupTest {
+
+	_foxSprite = [_levelLoader createSpriteWithName:@"0-11" fromSheet:@"Tiles" fromSHFile:@"Spritesheet" parent:_mainLayer];
+	[_foxSprite transformPosition:ccp(_levelSize.width/2,_levelSize.height/2)];
+	[_foxSprite transformScale:5];
+	
+	
 }
 
 -(void) initPhysics {
@@ -72,7 +84,6 @@
 	b2Vec2 gravity;
 	gravity.Set(0.0f, -10.0f);
 	_world = new b2World(gravity);
-	
 	
 	// Do we want to let bodies sleep?
 	_world->SetAllowSleeping(true);
@@ -153,6 +164,21 @@
 	// Instruct the world to perform a single step of simulation. It is
 	// generally best to keep the time step and iterations fixed.
 	_world->Step(dt, velocityIterations, positionIterations);
+	
+    //Iterate over the bodies in the physics world
+	for (b2Body* b = _world->GetBodyList(); b; b = b->GetNext()) {
+		if (b->GetUserData() != NULL) {
+			//Synchronize the AtlasSprites position and rotation with the corresponding body
+			CCSprite *myActor = (CCSprite*)b->GetUserData();
+            
+            if(myActor != 0) {
+                //THIS IS VERY IMPORTANT - GETTING THE POSITION FROM BOX2D TO COCOS2D
+                myActor.position = [LevelHelperLoader metersToPoints:b->GetPosition()];
+                myActor.rotation = -1 * CC_RADIANS_TO_DEGREES(b->GetAngle());
+            }
+            
+        }
+	}	
 }
 
 - (void)ccTouchesEnded:(NSSet *)touches withEvent:(UIEvent *)event {
