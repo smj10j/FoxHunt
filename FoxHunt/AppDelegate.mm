@@ -27,6 +27,7 @@
 		[TestFlight setDeviceIdentifier:[[UIDevice currentDevice] uniqueIdentifier]];
 	}	
 	
+	[ConfigManager init];
 	
 	//start analytics
 	[Analytics startAnalytics];

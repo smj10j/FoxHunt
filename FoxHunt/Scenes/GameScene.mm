@@ -53,7 +53,8 @@
 
 		_mainLayer = [_levelLoader layerWithUniqueName:@"MAIN_LAYER"];
 		_parallaxNode = [_levelLoader parallaxNodeWithUniqueName:@"Parallax"];
-		[_parallaxNode setSpeed:[ConfigManager intForKey:CONFIG_PARALLAX_SPEED]];
+		_normalParallaxSpeed = [ConfigManager intForKey:CONFIG_PARALLAX_SPEED];
+		_targetParallaxSpeed = _normalParallaxSpeed;
 
 		_levelSize = winSize.width < _levelLoader.gameWorldSize.size.width ? _levelLoader.gameWorldSize.size : winSize;
 		DebugLog(@"Level size: %f x %f", _levelSize.width, _levelSize.height);
@@ -135,9 +136,9 @@
 		//no step - we're just too dang fast!
 	}
 	
-	if(_lifetime - _lastConfigReload > 5) {
+	if(_lifetime - _lastConfigReload >= GAME_CONFIG_REFRESH_RATE) {
 		_lastConfigReload = _lifetime;
-		[_parallaxNode setSpeed:[ConfigManager intForKey:CONFIG_PARALLAX_SPEED]];
+		_normalParallaxSpeed = [ConfigManager intForKey:CONFIG_PARALLAX_SPEED];
 	}
 }
 
@@ -171,6 +172,19 @@
 	
 	//tell the player to update itself
 	[_player update:dt];
+	
+	[self updateParallaxSpeed];
+}
+
+-(void)updateParallaxSpeed {
+	
+	if(_targetParallaxSpeed != _parallaxNode.speed) {
+		[_parallaxNode setSpeed:_targetParallaxSpeed];
+		_targetParallaxSpeed+= (_normalParallaxSpeed - _targetParallaxSpeed)/100;
+		//DebugLog(@"_targetParallaxSpeed = %f", _targetParallaxSpeed);
+	}
+	
+	//DebugLog(@"Parallax speed: %f", _parallaxNode.speed);
 }
 
 
@@ -183,9 +197,13 @@
 		
 		location = [[CCDirector sharedDirector] convertToGL: location];
 	
-		[_player setJumping:true];
+		_lastTouchStart = location;
 	}
-	
+}
+
+- (void)ccTouchesMoved:(NSSet *)touches withEvent:(UIEvent *)event {
+
+
 }
 
 
@@ -194,7 +212,6 @@
 	_numTouchesOnScreen-= [touches count];
 	if(_numTouchesOnScreen <= 0) {
 		_numTouchesOnScreen = 0;
-		[_player setJumping:false];
 	}
 
 	for( UITouch *touch in touches ) {
@@ -202,7 +219,16 @@
 		
 		location = [[CCDirector sharedDirector] convertToGL: location];
 
+		//swipe direction
+		CGPoint dashVector = ccpNormalize(ccpSub(location, _lastTouchStart));
 		
+		//move the player
+		[_player dash:ccp(0, dashVector.y)];
+
+		if([_player isDashing]) {
+			//speed up/down parallax
+			_targetParallaxSpeed+= dashVector.x*[ConfigManager intForKey:CONFIG_PARALLAX_SPEED_ADJUSTMENT_FACTOR];
+		}
 	}
 }
 

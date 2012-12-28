@@ -11,6 +11,27 @@
 
 @implementation ConfigManager
 
++(void)init {
+			
+	NSString* rootPath = [NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) objectAtIndex:0];
+	NSString* outputConfigPlistPath = [rootPath stringByAppendingPathComponent:@"GameConfig.plist"];
+	
+	NSString* initialConfigPlistPath = [[[NSBundle mainBundle] bundlePath] stringByAppendingPathComponent:@"GameConfig.plist"];
+	
+	//load
+	NSDictionary* config = [[NSMutableDictionary alloc] initWithContentsOfFile:initialConfigPlistPath];
+	if(config == nil) {
+		config = [[NSMutableDictionary alloc] init];
+	}
+	
+	//write it out
+	if(![config writeToFile:outputConfigPlistPath atomically: YES]) {
+        DebugLog(@"---- Failed to copy over initial game config!! - %@ -----", outputConfigPlistPath);
+        return;
+    }	
+	
+	if(DEBUG_CONFIG || MODIFYING_GAME_CONFIG) DebugLog(@"Copied config from %@ to %@", initialConfigPlistPath, outputConfigPlistPath);
+}
 
 +(NSMutableDictionary*)loadConfig {
 	static NSMutableDictionary* sConfig = nil;
@@ -20,13 +41,14 @@
 		
 		lastConfigReloadSeconds = [[NSDate date] timeIntervalSince1970];
 		
-		NSString* configPlistPast = [[[NSBundle mainBundle] bundlePath] stringByAppendingPathComponent:@"GameConfig.plist"];
+		NSString* rootPath = [NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) objectAtIndex:0];
+		NSString* configPlistPath = [rootPath stringByAppendingPathComponent:@"GameConfig.plist"];
 		
-		sConfig = [[NSMutableDictionary alloc] initWithContentsOfFile:configPlistPast];
+		sConfig = [[NSMutableDictionary alloc] initWithContentsOfFile:configPlistPath];
 		if(sConfig == nil) {
 			sConfig = [[NSMutableDictionary alloc] init];
 		}
-		if(DEBUG_CONFIG) DebugLog(@"Loaded config from %@", configPlistPast);
+		if(DEBUG_CONFIG) DebugLog(@"Loaded config from %@", configPlistPath);
 	}
 	return sConfig;
 }

@@ -32,10 +32,13 @@ enum GAME_STATE {
 	CGSize _levelSize;
 	LHLayer* _mainLayer;
 	LHParallaxNode* _parallaxNode;
+	double _targetParallaxSpeed;
+	double _normalParallaxSpeed;
 
 	GAME_STATE _state;
 	
 	int _numTouchesOnScreen;
+	CGPoint _lastTouchStart;
 	
 	Player* _player;
 }

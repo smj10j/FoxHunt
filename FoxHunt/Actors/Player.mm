@@ -25,37 +25,35 @@
 		
 		_isMoving = false;
 		
-		_isJumping = false;
+		_isDashing = false;
 		_isOnGround = false;
-		_canJump = true;
+		_canDash = true;
 		
 	}
 	return self;
 }
 
--(void)setJumping:(bool)isJumping {
-	_isJumping = isJumping;
-	if(!_isJumping) {
-		_canJump = false;
-	}
-}
-
 
 -(void)update:(ccTime)dt {
-	_lifetime+= dt;	
+	_lifetime+= dt;
 
-	if(_isMoving) {
-
-
+	b2Vec2 v = _sprite.body->GetLinearVelocity();
+	if(v.x < 0.5 && v.y < 0.5) {
+		_isDashing = false;
 	}
 	
-	if(_isJumping) {
-		[self jump];
-	}
 }
 
 -(LHSprite*)sprite {
 	return _sprite;
+}
+
+-(bool)isOnGround {
+	return _isOnGround;
+}
+
+-(bool)isDashing {
+	return _isDashing;
 }
 
 -(void) onGroundCollision:(LHContactInfo*)contact {
@@ -64,8 +62,8 @@
 	if(playerSprite != nil) {
 		if(contact.contactType == LH_BEGIN_CONTACT) {
 			_isOnGround = true;
-			_canJump = true;
-			_jumpImpulse = [ConfigManager doubleForKey:CONFIG_PLAYER_JUMP_IMPULSE];
+			_canDash = true;
+			_dashImpulse = [ConfigManager doubleForKey:CONFIG_PLAYER_DASH_IMPULSE];
 			
 			[_sprite prepareAnimationNamed:[_sprite.animationName stringByReplacingOccurrencesOfString:@"_fly" withString:@"_run"]  fromSHScene:_sprite.animationSHScene];
 			
@@ -86,19 +84,24 @@
 	[_sprite stopAnimation];
 }
 
--(void)jump {
-	if(_canJump) {
-		[_sprite prepareAnimationNamed:[_sprite.animationName stringByReplacingOccurrencesOfString:@"_run" withString:@"_fly"]  fromSHScene:_sprite.animationSHScene];
-		[_sprite playAnimation];
-		
-		const float MAX_VELOCITY = [ConfigManager doubleForKey:CONFIG_PLAYER_JUMP_VELOCITY_MAX];
-		if(_sprite.body->GetLinearVelocity().y > MAX_VELOCITY) {
-			_canJump = false;
-			return;
-		}
-		_sprite.body->ApplyLinearImpulse(b2Vec2(0,_jumpImpulse), _sprite.body->GetWorldCenter());
 
-		_isOnGround = false;
+-(void)dash:(CGPoint)direction {
+	if(_canDash) {
+		DebugLog(@"DASH!! direction = %f,%f", direction.x, direction.y);
+		_isDashing = true;
+		_sprite.body->ApplyLinearImpulse(
+				b2Vec2(direction.x*_dashImpulse,
+						direction.y*_dashImpulse),
+			_sprite.body->GetWorldCenter()
+		);
+		
+		//dash once when in the air
+		if(_isOnGround) {
+			_isOnGround = false;
+		}else {
+			_canDash = false;
+		}
+		
 	}
 }
 

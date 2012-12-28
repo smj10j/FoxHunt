@@ -25,9 +25,10 @@
 	
 	bool _isMoving;
 	
-	bool _isJumping;
-	float _jumpImpulse;
-	bool _canJump;
+	bool _canDash;
+	bool _isDashing;
+	float _dashImpulse;
+	
 	bool _isOnGround;
 }
 
@@ -37,12 +38,15 @@
 
 
 -(LHSprite*)sprite;
+-(bool)isOnGround;
+-(bool)isDashing;
 
 -(void) onGroundCollision:(LHContactInfo*)contact;
 
 -(void)run;
 -(void)stop;
--(void)setJumping:(bool)isJumping;
+-(void)dash:(CGPoint)direction;
+
 
 -(void)dealloc;
 
