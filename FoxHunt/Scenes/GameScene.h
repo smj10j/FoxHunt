@@ -10,6 +10,14 @@
 #import "Box2D.h"
 #import "LevelHelperLoader.h"
 #import "CCPhysicsSprite.h"
+#import "Player.h"
+
+enum GAME_STATE {
+	SETUP,
+	PAUSE,
+	RUNNING,
+	GAME_OVER
+};
 
 // HelloWorldLayer
 @interface GameScene : CCLayer
@@ -22,10 +30,12 @@
 	CGSize _levelSize;
 	LHLayer* _mainLayer;
 
+	GAME_STATE _state;
+	
+	int _numTouchesOnScreen;
 	
 	
-	
-	LHSprite* _foxSprite;
+	Player* _player;
 }
 
 // returns a CCScene that contains the HelloWorldLayer as the only child

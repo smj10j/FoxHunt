@@ -21,6 +21,10 @@
 		76349743497a169e11bcd58e /* LHParallaxNode.mm in Sources */ = {isa = PBXBuildFile; fileRef = 2e88ce82f9ba44601b674f2b /* LHParallaxNode.mm */; };
 		7c4477967b3e8d5773baaf1c /* LHSprite.mm in Sources */ = {isa = PBXBuildFile; fileRef = 1dd46984bf9e2bae0b50594e /* LHSprite.mm */; };
 		868944766f6c8d60c08dabfa /* LHContactNode.mm in Sources */ = {isa = PBXBuildFile; fileRef = 49a864eb542f01b4e9d96737 /* LHContactNode.mm */; };
+		AA3BF3DF168E16DE00FAD111 /* Player.mm in Sources */ = {isa = PBXBuildFile; fileRef = AA3BF3DE168E16DE00FAD111 /* Player.mm */; };
+		AA3BF404168E360100FAD111 /* Spritesheet_Actors-hd.png in Resources */ = {isa = PBXBuildFile; fileRef = AA3BF401168E360100FAD111 /* Spritesheet_Actors-hd.png */; };
+		AA3BF405168E360100FAD111 /* Spritesheet_Actors-ipadhd.png in Resources */ = {isa = PBXBuildFile; fileRef = AA3BF402168E360100FAD111 /* Spritesheet_Actors-ipadhd.png */; };
+		AA3BF406168E360100FAD111 /* Spritesheet_Actors.png in Resources */ = {isa = PBXBuildFile; fileRef = AA3BF403168E360100FAD111 /* Spritesheet_Actors.png */; };
 		AAC4BBE9168CF8290086A379 /* Spritesheet_Tiles-hd.png in Resources */ = {isa = PBXBuildFile; fileRef = AAC4BBE6168CF8290086A379 /* Spritesheet_Tiles-hd.png */; };
 		AAC4BBEA168CF8290086A379 /* Spritesheet_Tiles-ipadhd.png in Resources */ = {isa = PBXBuildFile; fileRef = AAC4BBE7168CF8290086A379 /* Spritesheet_Tiles-ipadhd.png */; };
 		AAC4BBEB168CF8290086A379 /* Spritesheet_Tiles.png in Resources */ = {isa = PBXBuildFile; fileRef = AAC4BBE8168CF8290086A379 /* Spritesheet_Tiles.png */; };
@@ -264,6 +268,11 @@
 		833ae0db85155bff9ee8b878 /* LHLayer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = LHLayer.h; sourceTree = "<group>"; };
 		9a81c1fbee6e13013cc27d9b /* LHSettings.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = LHSettings.mm; sourceTree = "<group>"; };
 		9abcf5a26f704879bbed9082 /* LHCuttingEngineMgr.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = LHCuttingEngineMgr.h; sourceTree = "<group>"; };
+		AA3BF3DD168E16DE00FAD111 /* Player.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Player.h; sourceTree = "<group>"; };
+		AA3BF3DE168E16DE00FAD111 /* Player.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = Player.mm; sourceTree = "<group>"; };
+		AA3BF401168E360100FAD111 /* Spritesheet_Actors-hd.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Spritesheet_Actors-hd.png"; sourceTree = "<group>"; };
+		AA3BF402168E360100FAD111 /* Spritesheet_Actors-ipadhd.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Spritesheet_Actors-ipadhd.png"; sourceTree = "<group>"; };
+		AA3BF403168E360100FAD111 /* Spritesheet_Actors.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Spritesheet_Actors.png; sourceTree = "<group>"; };
 		AAC4BBE6168CF8290086A379 /* Spritesheet_Tiles-hd.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Spritesheet_Tiles-hd.png"; sourceTree = "<group>"; };
 		AAC4BBE7168CF8290086A379 /* Spritesheet_Tiles-ipadhd.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Spritesheet_Tiles-ipadhd.png"; sourceTree = "<group>"; };
 		AAC4BBE8168CF8290086A379 /* Spritesheet_Tiles.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Spritesheet_Tiles.png; sourceTree = "<group>"; };
@@ -771,6 +780,15 @@
 			path = Helpers;
 			sourceTree = "<group>";
 		};
+		AA3BF3DC168E16DE00FAD111 /* Actors */ = {
+			isa = PBXGroup;
+			children = (
+				AA3BF3DD168E16DE00FAD111 /* Player.h */,
+				AA3BF3DE168E16DE00FAD111 /* Player.mm */,
+			);
+			path = Actors;
+			sourceTree = "<group>";
+		};
 		AAF3E0AC168788BF0096D7C6 = {
 			isa = PBXGroup;
 			children = (
@@ -814,6 +832,7 @@
 			isa = PBXGroup;
 			children = (
 				AAF3E316168791E80096D7C6 /* Common */,
+				AA3BF3DC168E16DE00FAD111 /* Actors */,
 				AAF3E32C168794EC0096D7C6 /* Managers */,
 				AAF3E31E168791F50096D7C6 /* Scenes */,
 				AAF3E2E7168788C20096D7C6 /* AppDelegate.h */,
@@ -1369,6 +1388,9 @@
 			isa = PBXGroup;
 			children = (
 				AAC4BBFB168CFA800086A379 /* Spritesheet.pshs */,
+				AA3BF401168E360100FAD111 /* Spritesheet_Actors-hd.png */,
+				AA3BF402168E360100FAD111 /* Spritesheet_Actors-ipadhd.png */,
+				AA3BF403168E360100FAD111 /* Spritesheet_Actors.png */,
 				AAC4BBE6168CF8290086A379 /* Spritesheet_Tiles-hd.png */,
 				AAC4BBE7168CF8290086A379 /* Spritesheet_Tiles-ipadhd.png */,
 				AAC4BBE8168CF8290086A379 /* Spritesheet_Tiles.png */,
@@ -1593,6 +1615,9 @@
 				AAC4BBEB168CF8290086A379 /* Spritesheet_Tiles.png in Resources */,
 				AAC4BBF2168CF8A00086A379 /* Levels in Resources */,
 				AAC4BBFC168CFA800086A379 /* Spritesheet.pshs in Resources */,
+				AA3BF404168E360100FAD111 /* Spritesheet_Actors-hd.png in Resources */,
+				AA3BF405168E360100FAD111 /* Spritesheet_Actors-ipadhd.png in Resources */,
+				AA3BF406168E360100FAD111 /* Spritesheet_Actors.png in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1770,6 +1795,19 @@
 				AAF3E2E0168788C20096D7C6 /* b2Rope.cpp in Sources */,
 				AAF3E2E6168788C20096D7C6 /* main.m in Sources */,
 				AAF3E2E9168788C20096D7C6 /* AppDelegate.mm in Sources */,
+				AAF3E323168791F60096D7C6 /* GameScene.mm in Sources */,
+				AAF3E324168791F60096D7C6 /* BootScene.mm in Sources */,
+				AAF3E334168794EC0096D7C6 /* Analytics.mm in Sources */,
+				AAF3E335168794EC0096D7C6 /* IAPManager.mm in Sources */,
+				AAF3E336168794EC0096D7C6 /* SettingsManager.mm in Sources */,
+				AAF3E3391687950D0096D7C6 /* Utilities.mm in Sources */,
+				AAF3E3C31687956E0096D7C6 /* EBPurchase.m in Sources */,
+				AAF3E3C41687956E0096D7C6 /* SKProduct+LocalizedPrice.m in Sources */,
+				AAF3E41F1687956E0096D7C6 /* JSONKit.m in Sources */,
+				AAF3E4211687956E0096D7C6 /* Reachability.m in Sources */,
+				AAF3E4271687956E0096D7C6 /* SSKeychain.m in Sources */,
+				AAF3E4511687A0330096D7C6 /* ConfigManager.mm in Sources */,
+				AA3BF3DF168E16DE00FAD111 /* Player.mm in Sources */,
 				da8ae1a3ed563136e9d0c419 /* LevelHelperLoader.mm in Sources */,
 				d89955832a2f30a40fc0378f /* LHDictionaryExt.mm in Sources */,
 				1acdb9308d35abe583a4f523 /* LHMouseJointExt.mm in Sources */,
@@ -1791,18 +1829,6 @@
 				7c4477967b3e8d5773baaf1c /* LHSprite.mm in Sources */,
 				cbcf8a3be72e6868338383a0 /* LHTouchMgr.mm in Sources */,
 				250e1473997f280a794687eb /* SHDocumentLoader.mm in Sources */,
-				AAF3E323168791F60096D7C6 /* GameScene.mm in Sources */,
-				AAF3E324168791F60096D7C6 /* BootScene.mm in Sources */,
-				AAF3E334168794EC0096D7C6 /* Analytics.mm in Sources */,
-				AAF3E335168794EC0096D7C6 /* IAPManager.mm in Sources */,
-				AAF3E336168794EC0096D7C6 /* SettingsManager.mm in Sources */,
-				AAF3E3391687950D0096D7C6 /* Utilities.mm in Sources */,
-				AAF3E3C31687956E0096D7C6 /* EBPurchase.m in Sources */,
-				AAF3E3C41687956E0096D7C6 /* SKProduct+LocalizedPrice.m in Sources */,
-				AAF3E41F1687956E0096D7C6 /* JSONKit.m in Sources */,
-				AAF3E4211687956E0096D7C6 /* Reachability.m in Sources */,
-				AAF3E4271687956E0096D7C6 /* SSKeychain.m in Sources */,
-				AAF3E4511687A0330096D7C6 /* ConfigManager.mm in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

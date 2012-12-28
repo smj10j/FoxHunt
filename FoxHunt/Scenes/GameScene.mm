@@ -30,6 +30,8 @@
 		
 		// enable events
 		
+		_state = SETUP;
+		
 		self.isTouchEnabled = YES;
 		
 		//CGSize winSize = [CCDirector sharedDirector].winSize;
@@ -41,13 +43,13 @@
 		
 		// init physics
 		[self initPhysics];
-		[self createGround];
 
 		//create a LevelHelperLoader object that has the data of the specified level
 		_levelLoader = [[LevelHelperLoader alloc] initWithContentOfFile:[NSString stringWithFormat:@"Levels/Empty"]];
 		
 		//create all objects from the level file and adds them to the cocos2d layer (self)
 		[_levelLoader addObjectsToWorld:_world cocos2dLayer:self];
+		[_levelLoader useLevelHelperCollisionHandling];
 
 		_mainLayer = [_levelLoader layerWithUniqueName:@"MAIN_LAYER"];
 
@@ -60,11 +62,14 @@
 			//if it does, it will create the physic boundaries
 			[_levelLoader createPhysicBoundaries:_world];
 		}	
-		
+		if(![_levelLoader isGravityZero]) {
+			//create level-specified gravity
+			[_levelLoader createGravity:_world];
+		}
 
-		
 		[self setupTest];
 		
+		_state = RUNNING;
 		[self scheduleUpdate];
 	}
 	return self;
@@ -72,17 +77,23 @@
 
 -(void) setupTest {
 
-	_foxSprite = [_levelLoader createSpriteWithName:@"0-11" fromSheet:@"Tiles" fromSHFile:@"Spritesheet" parent:_mainLayer];
-	[_foxSprite transformPosition:ccp(_levelSize.width/2,_levelSize.height/2)];
-	[_foxSprite transformScale:5];
+	LHSprite* foxSprite = [_levelLoader createSpriteWithName:@"rocketmouse_1_run" fromSheet:@"Actors" fromSHFile:@"Spritesheet" tag:PLAYER parent:_mainLayer];
+	[foxSprite transformPosition:ccp(200*SCALING_FACTOR_H, _levelSize.height/2)];
+	[foxSprite prepareAnimationNamed:@"Player_run" fromSHScene:@"Spritesheet"];
 	
+	_player = [[Player alloc] initWithSprite:foxSprite];
+	[_player run];
 	
+	[_levelLoader registerBeginOrEndCollisionCallbackBetweenTagA:PLAYER
+															andTagB:GROUND
+				idListener:_player
+				selListener:@selector(onGroundCollision:)];
 }
 
 -(void) initPhysics {
 		
 	b2Vec2 gravity;
-	gravity.Set(0.0f, -10.0f);
+	gravity.Set(0.0f, 0.0f);
 	_world = new b2World(gravity);
 	
 	// Do we want to let bodies sleep?
@@ -91,38 +102,6 @@
 	_world->SetContinuousPhysics(true);
 }
 
--(void) createGround {
-
-	CGSize s = [[CCDirector sharedDirector] winSize];
-
-	// Define the ground body.
-	b2BodyDef groundBodyDef;
-	groundBodyDef.position.Set(0, 0); // bottom-left corner
-	
-	// Call the body factory which allocates memory for the ground body
-	// from a pool and creates the ground box shape (also from a pool).
-	// The body is also added to the world.
-	b2Body* groundBody = _world->CreateBody(&groundBodyDef);
-	
-	// Define the ground box shape.
-	b2EdgeShape groundBox;		
-	
-	// bottom
-	groundBox.Set(b2Vec2(0,0), b2Vec2(s.width/PTM_RATIO,0));
-	groundBody->CreateFixture(&groundBox,0);
-	
-	// top
-	groundBox.Set(b2Vec2(0,s.height/PTM_RATIO), b2Vec2(s.width/PTM_RATIO,s.height/PTM_RATIO));
-	groundBody->CreateFixture(&groundBox,0);
-	
-	// left
-	groundBox.Set(b2Vec2(0,s.height/PTM_RATIO), b2Vec2(0,0));
-	groundBody->CreateFixture(&groundBox,0);
-	
-	// right
-	groundBox.Set(b2Vec2(s.width/PTM_RATIO,s.height/PTM_RATIO), b2Vec2(s.width/PTM_RATIO,0));
-	groundBody->CreateFixture(&groundBox,0);
-}
 
 -(void) draw {
 	[super draw];
@@ -158,6 +137,8 @@
 	
 	//DebugLog(@"singleUpdateStep. _fixedTimestepAccumulator = %f", _fixedTimestepAccumulator);
 
+
+
 	const static int32 velocityIterations = 8;
 	const static int32 positionIterations = 1;
 	
@@ -178,11 +159,34 @@
             }
             
         }
-	}	
+	}
+	
+	//tell the player to update itself
+	[_player update:dt];
 }
 
+
+- (void)ccTouchesBegan:(NSSet *)touches withEvent:(UIEvent *)event {
+
+	_numTouchesOnScreen+= [touches count];
+
+	for( UITouch *touch in touches ) {
+		CGPoint location = [touch locationInView: [touch view]];
+		
+		location = [[CCDirector sharedDirector] convertToGL: location];
+	
+		[_player jump];
+	}
+}
+
+
 - (void)ccTouchesEnded:(NSSet *)touches withEvent:(UIEvent *)event {
-	//Add a new body/atlas sprite at the touched location
+
+	_numTouchesOnScreen-= [touches count];
+	if(_numTouchesOnScreen < 0) {
+		_numTouchesOnScreen = 0;
+	}
+
 	for( UITouch *touch in touches ) {
 		CGPoint location = [touch locationInView: [touch view]];
 		
@@ -191,6 +195,7 @@
 		
 	}
 }
+
 
 
 
@@ -217,6 +222,11 @@
 -(void) dealloc {
 	if(DEBUG_MEMORY) DebugLog(@"GameScene dealloc");
 	if(DEBUG_MEMORY) report_memory();
+	
+	if(_player != nil) {
+		[_player release];
+		_player = nil;
+	}
 	
 	[_levelLoader removeAllPhysics];
 	[_levelLoader release];

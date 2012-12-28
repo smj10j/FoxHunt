@@ -35,7 +35,7 @@
 	<key>CustomClasses</key>
 	<array/>
 	<key>CustomScreenSize</key>
-	<string>{0, 0}</string>
+	<string>{480, 320}</string>
 	<key>Device</key>
 	<integer>2</integer>
 	<key>Engine</key>
@@ -73,6 +73,11 @@
 	<key>Tags</key>
 	<array>
 		<string>DEFAULT</string>
+		<string>PLAYER</string>
+		<string>GROUND</string>
+		<string>PREY</string>
+		<string>LOG</string>
+		<string>COIN</string>
 	</array>
 </dict>
 </plist>

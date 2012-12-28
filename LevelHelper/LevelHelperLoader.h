@@ -62,7 +62,12 @@
 enum LevelHelper_TAG 
 { 
 	DEFAULT_TAG 	= 0,
-	NUMBER_OF_TAGS 	= 1
+	PLAYER 			= 1,
+	GROUND 			= 2,
+	PREY 			= 3,
+	LOG 			= 4,
+	COIN 			= 5,
+	NUMBER_OF_TAGS 	= 6
 };
 
 CGSize  LHSizeFromString(NSString* val);
