@@ -527,7 +527,7 @@
 			<key>Direction</key>
 			<integer>1</integer>
 			<key>Speed</key>
-			<real>200</real>
+			<real>300</real>
 			<key>Sprites</key>
 			<array>
 				<dict>
@@ -580,7 +580,7 @@
 				</dict>
 			</array>
 			<key>UniqueName</key>
-			<string>Parallax_1</string>
+			<string>Parallax</string>
 			<key>ZOrder</key>
 			<integer>0</integer>
 		</dict>

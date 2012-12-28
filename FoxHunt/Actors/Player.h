@@ -24,6 +24,9 @@
 	NSString* _type;
 	
 	bool _isMoving;
+	
+	bool _isJumping;
+	float _jumpImpulse;
 	bool _canJump;
 	bool _isOnGround;
 }
@@ -39,7 +42,7 @@
 
 -(void)run;
 -(void)stop;
--(void)jump;
+-(void)setJumping:(bool)isJumping;
 
 -(void)dealloc;
 

@@ -52,6 +52,8 @@
 		[_levelLoader useLevelHelperCollisionHandling];
 
 		_mainLayer = [_levelLoader layerWithUniqueName:@"MAIN_LAYER"];
+		_parallaxNode = [_levelLoader parallaxNodeWithUniqueName:@"Parallax"];
+		[_parallaxNode setSpeed:[ConfigManager intForKey:CONFIG_PARALLAX_SPEED]];
 
 		_levelSize = winSize.width < _levelLoader.gameWorldSize.size.width ? _levelLoader.gameWorldSize.size : winSize;
 		DebugLog(@"Level size: %f x %f", _levelSize.width, _levelSize.height);
@@ -109,6 +111,7 @@
 
 -(void) update: (ccTime) dt {
 	
+	_lifetime+= dt;
 	_fixedTimestepAccumulator+= dt;
 	//DebugLog(@"dt = %f, _fixedTimestepAccumulator = %f", dt, _fixedTimestepAccumulator);
 	
@@ -130,6 +133,11 @@
 		
 	}else {
 		//no step - we're just too dang fast!
+	}
+	
+	if(_lifetime - _lastConfigReload > 5) {
+		_lastConfigReload = _lifetime;
+		[_parallaxNode setSpeed:[ConfigManager intForKey:CONFIG_PARALLAX_SPEED]];
 	}
 }
 
@@ -175,16 +183,18 @@
 		
 		location = [[CCDirector sharedDirector] convertToGL: location];
 	
-		[_player jump];
+		[_player setJumping:true];
 	}
+	
 }
 
 
 - (void)ccTouchesEnded:(NSSet *)touches withEvent:(UIEvent *)event {
 
 	_numTouchesOnScreen-= [touches count];
-	if(_numTouchesOnScreen < 0) {
+	if(_numTouchesOnScreen <= 0) {
 		_numTouchesOnScreen = 0;
+		[_player setJumping:false];
 	}
 
 	for( UITouch *touch in touches ) {

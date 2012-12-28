@@ -26,14 +26,16 @@ enum GAME_STATE {
 	b2World* _world;					// strong ref
 
 	float _fixedTimestepAccumulator;
+	double _lifetime;
+	double _lastConfigReload;
 	
 	CGSize _levelSize;
 	LHLayer* _mainLayer;
+	LHParallaxNode* _parallaxNode;
 
 	GAME_STATE _state;
 	
 	int _numTouchesOnScreen;
-	
 	
 	Player* _player;
 }

@@ -24,6 +24,8 @@
 		_lifetime = 0;
 		
 		_isMoving = false;
+		
+		_isJumping = false;
 		_isOnGround = false;
 		_canJump = true;
 		
@@ -31,15 +33,24 @@
 	return self;
 }
 
+-(void)setJumping:(bool)isJumping {
+	_isJumping = isJumping;
+	if(!_isJumping) {
+		_canJump = false;
+	}
+}
+
+
 -(void)update:(ccTime)dt {
 	_lifetime+= dt;	
 
 	if(_isMoving) {
 
-		//slide the parent layer
-		//CGPoint speedVector = ccpMult(ccp(1*PTM_RATIO, 0), -dt);
-		//_sprite.parent.position = ccpAdd(_sprite.parent.position, speedVector);
-		//DebugLog(@"parent pos: %f,%f", _sprite.parent.position.x, _sprite.parent.position.y);
+
+	}
+	
+	if(_isJumping) {
+		[self jump];
 	}
 }
 
@@ -54,7 +65,7 @@
 		if(contact.contactType == LH_BEGIN_CONTACT) {
 			_isOnGround = true;
 			_canJump = true;
-			
+			_jumpImpulse = [ConfigManager doubleForKey:CONFIG_PLAYER_JUMP_IMPULSE];
 			
 			[_sprite prepareAnimationNamed:[_sprite.animationName stringByReplacingOccurrencesOfString:@"_fly" withString:@"_run"]  fromSHScene:_sprite.animationSHScene];
 			
@@ -80,14 +91,14 @@
 		[_sprite prepareAnimationNamed:[_sprite.animationName stringByReplacingOccurrencesOfString:@"_run" withString:@"_fly"]  fromSHScene:_sprite.animationSHScene];
 		[_sprite playAnimation];
 		
-		_sprite.body->ApplyLinearImpulse(b2Vec2(0,0.75), _sprite.body->GetWorldCenter());
-
-		//enable double jump
-		if(_isOnGround) {
-			_isOnGround = false;
-		}else {
+		const float MAX_VELOCITY = [ConfigManager doubleForKey:CONFIG_PLAYER_JUMP_VELOCITY_MAX];
+		if(_sprite.body->GetLinearVelocity().y > MAX_VELOCITY) {
 			_canJump = false;
+			return;
 		}
+		_sprite.body->ApplyLinearImpulse(b2Vec2(0,_jumpImpulse), _sprite.body->GetWorldCenter());
+
+		_isOnGround = false;
 	}
 }
 
