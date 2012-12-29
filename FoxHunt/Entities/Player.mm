@@ -49,6 +49,8 @@
 
 -(void)update:(ccTime)dt {
 	_lifetime+= dt;
+
+	if(!_isAlive) return;	
 	
 	if(_needsToDie) {
 		if(!_isDying) {

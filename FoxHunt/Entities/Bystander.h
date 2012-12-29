@@ -12,6 +12,7 @@
 #import "Common.h"
 #import "LevelHelperLoader.h"
 #import "CCPhysicsSprite.h"
+#import "ParallaxLayer.h"
 
 @interface Bystander : NSObject {
 

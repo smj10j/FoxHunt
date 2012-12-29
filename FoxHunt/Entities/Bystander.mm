@@ -35,6 +35,8 @@
 
 -(void)update:(ccTime)dt {
 	_lifetime+= dt;
+
+	if(!_isAlive) return;
 	
 	if(_needsToDie) {
 		if(!_isDying) {
@@ -43,7 +45,9 @@
 		return;
 	}
 	
-	if(_sprite.position.x <= _sprite.boundingBox.size.width) {
+	ParallaxLayer* parallaxLayer = (ParallaxLayer*)_sprite.parent;
+	
+	if(![parallaxLayer isNodeVisible:_sprite]) {
 		[_sprite runAction:[CCSequence actions:
 					[CCDelayTime actionWithDuration:0.50f],
 					[CCCallBlock actionWithBlock:^{
@@ -93,7 +97,7 @@
 }
 
 -(void)makeAliveAt:(CGPoint)pos {
-	[_sprite transformPosition:pos];
+	[_sprite transformPosition:ccp(pos.x - ((ParallaxLayer*)_sprite.parent).offset, pos.y)];
 	_sprite.visible = true;
 	_needsToDie = false;
 	_isDying = false;

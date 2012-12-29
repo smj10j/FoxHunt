@@ -54,8 +54,7 @@
 		[_levelLoader useLevelHelperCollisionHandling];
 
 		_mainLayer = [_levelLoader layerWithUniqueName:@"MAIN_LAYER"];
-		_parallaxNode = [_levelLoader parallaxNodeWithUniqueName:@"Parallax"];
-
+		
 		_levelSize = winSize.width < _levelLoader.gameWorldSize.size.width ? _levelLoader.gameWorldSize.size : winSize;
 		DebugLog(@"Level size: %f x %f", _levelSize.width, _levelSize.height);
 
@@ -75,21 +74,37 @@
 		[self addChild:_traveDistanceLabel];
 
 
+		//setup parallax
+
+		_parallaxLayer = [[ParallaxLayer alloc] init];
+		_parallaxLayer.position = ccp(0, winSize.height/2);
+		[_mainLayer addChild:_parallaxLayer];
+		
+		for(int i = 0; i < 4; i++) {
+			LHSprite* parallaxBg = [_levelLoader createBatchSpriteWithName:@"bg" fromSheet:@"Background" fromSHFile:@"Spritesheet" tag:DEFAULT_TAG];
+			[parallaxBg removeFromParentAndCleanup:FALSE];
+			[parallaxBg transformPosition:ccp(parallaxBg.boundingBox.size.width*i,0)];
+			[_parallaxLayer pushBackgroundNode:parallaxBg parallaxRatio:ccp(1,0)];
+		}
+		
 		//create obstacles
 		for(int i = 0; i < 10; i++) {
 			LHSprite* obstacleSprite = [_levelLoader createBatchSpriteWithName:@"object_sleepingdog" fromSheet:@"Obstacles" fromSHFile:@"Spritesheet" tag:OBSTACLE];
-			[_parallaxNode addSprite:obstacleSprite parallaxRatio:ccp(1,0)];
+			[obstacleSprite removeFromParentAndCleanup:FALSE];
+			[_parallaxLayer addNode:obstacleSprite parallaxRatio:ccp(1,0)];
 			
 			Obstacle* obstacle = [[Obstacle alloc] initWithSprite:obstacleSprite];
 			obstacleSprite.userData = obstacle;
 			_obstacles.push_back(obstacle);
 		}
 
+//TODO: parallax is SLOOOOOOOWWWWW
 
 		//create bystanders
 		for(int i = 0; i < 10; i++) {
 			LHSprite* bystanderSprite = [_levelLoader createBatchSpriteWithName:@"object_sleepingcat" fromSheet:@"Obstacles" fromSHFile:@"Spritesheet" tag:BYSTANDER];
-			[_parallaxNode addSprite:bystanderSprite parallaxRatio:ccp(1,0)];
+			[bystanderSprite removeFromParentAndCleanup:FALSE];
+			[_parallaxLayer addNode:bystanderSprite parallaxRatio:ccp(1,0)];
 			
 			Bystander* bystander = [[Bystander alloc] initWithSprite:bystanderSprite];
 			bystanderSprite.userData = bystander;
@@ -162,7 +177,7 @@
 	}
 
 	_lifetime+= dt;
-	_traveDistanceInPixels+= dt*_parallaxNode.speed;
+	_traveDistanceInPixels+= dt*_parallaxLayer.speed;
 	_traveDistanceLabel.string = [NSString stringWithFormat:@"%dm", (int)(_traveDistanceInPixels/PTM_RATIO)];
 	
 	_fixedTimestepAccumulator+= dt;
@@ -232,7 +247,7 @@
 	}
 	
 	[self updateParallaxSpeed];
-	
+	[_parallaxLayer update:dt];
 	
 	
 	//generate random bystanders
@@ -278,8 +293,8 @@
 
 -(void)updateParallaxSpeed {
 	
-	if(_targetParallaxSpeed != _parallaxNode.speed) {
-		[_parallaxNode setSpeed:_targetParallaxSpeed];
+	if(_targetParallaxSpeed != _parallaxLayer.speed) {
+		[_parallaxLayer setSpeed:_targetParallaxSpeed];
 		_targetParallaxSpeed+= (_normalParallaxSpeed - _targetParallaxSpeed)/100;
 		//DebugLog(@"_targetParallaxSpeed = %f", _targetParallaxSpeed);
 	}

@@ -13,6 +13,7 @@
 #import "Player.h"
 #import "Obstacle.h"
 #import "Bystander.h"
+#import "ParallaxLayer.h"
 #import <list>
 using namespace std;
 
@@ -35,7 +36,7 @@ enum GAME_STATE {
 	
 	CGSize _levelSize;
 	LHLayer* _mainLayer;
-	LHParallaxNode* _parallaxNode;
+	ParallaxLayer* _parallaxLayer;
 	double _targetParallaxSpeed;
 	double _normalParallaxSpeed;
 	
