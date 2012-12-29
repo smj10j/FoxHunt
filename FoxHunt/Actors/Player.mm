@@ -25,6 +25,10 @@
 		
 		_isMoving = false;
 		
+		_isAlive = true;
+		_needsToDie = false;
+		_isDying = false;
+		
 		_isDashing = false;
 		_isOnGround = false;
 		_canDash = true;
@@ -34,7 +38,7 @@
 		
 		_startX = [ConfigManager intForKey:CONFIG_PLAYER_START_POSITION_X] * SCALING_FACTOR_H;
 		
-		_obstaclesToRemove = [[NSMutableArray alloc] init];
+		_spritesToRemove = [[NSMutableArray alloc] init];
 
 	}
 	return self;
@@ -43,6 +47,13 @@
 
 -(void)update:(ccTime)dt {
 	_lifetime+= dt;
+	
+	if(_needsToDie) {
+		if(!_isDying) {
+			[self die];
+		}
+		return;
+	}
 
 	b2Vec2 v = _sprite.body->GetLinearVelocity();
 	if(v.x < 0.5 && v.y < 0.5) {
@@ -52,29 +63,29 @@
 	//lock to a fixed position
 	[_sprite transformPosition:ccp(_startX, _sprite.position.y)];
 	
-	for(LHSprite* obstacleSprite in _obstaclesToRemove) {
+	for(LHSprite* sprite in _spritesToRemove) {
 		
-		DebugLog(@"Destroying crushed baddie!");
+		DebugLog(@"Plyer is destroying sprite!");
 		
-		[obstacleSprite makeNoPhysics];
+		[sprite makeNoPhysics];
 		
-		[obstacleSprite runAction:[CCRepeatForever actionWithAction:[CCRotateBy actionWithDuration:0.5 angle:360]]];
+		[sprite runAction:[CCRepeatForever actionWithAction:[CCRotateBy actionWithDuration:0.5 angle:360]]];
 
-		[obstacleSprite runAction:[CCMoveBy actionWithDuration:2.0f
+		[sprite runAction:[CCMoveBy actionWithDuration:2.0f
 											position:ccp(arc4random_uniform(300*SCALING_FACTOR_H)-(150*SCALING_FACTOR_H),
 													-400*SCALING_FACTOR_V)]];
 		
-		[obstacleSprite runAction:[CCSequence actions:
+		[sprite runAction:[CCSequence actions:
 				[CCDelayTime actionWithDuration:0.5],
 				[CCFadeOut actionWithDuration:1.0],
 				[CCCallBlock actionWithBlock:^{
-					[obstacleSprite removeSelf];
+					[sprite removeSelf];
 				}],
 				nil
 			]
 		 ];
 	}
-	[_obstaclesToRemove removeAllObjects];
+	[_spritesToRemove removeAllObjects];
 	
 	
 	if(MODIFYING_GAME_CONFIG && _lifetime - _lastConfigReload >= GAME_CONFIG_REFRESH_RATE) {
@@ -93,6 +104,35 @@
 
 -(bool)isDashing {
 	return _isDashing;
+}
+
+-(bool)isAlive {
+	return _isAlive;
+}
+
+-(void)die {
+	DebugLog(@"Adios, amigo.");
+	
+	_isDying = true;
+	
+	[_sprite makeNoPhysics];
+		
+	[_sprite runAction:[CCRepeatForever actionWithAction:[CCRotateBy actionWithDuration:0.5 angle:360]]];
+
+	[_sprite runAction:[CCMoveBy actionWithDuration:2.0f
+										position:ccp(arc4random_uniform(300*SCALING_FACTOR_H)-(150*SCALING_FACTOR_H),
+												-400*SCALING_FACTOR_V)]];
+	
+	[_sprite runAction:[CCSequence actions:
+			[CCDelayTime actionWithDuration:0.5],
+			[CCFadeOut actionWithDuration:1.0],
+			[CCCallBlock actionWithBlock:^{
+				[_sprite removeSelf];
+				_isAlive = false;
+			}],
+			nil
+		]
+	 ];
 }
 
 -(void) onGroundCollision:(LHContactInfo*)contact {
@@ -114,20 +154,21 @@
 	}
 }
 
--(void) onObstacleCollision:(LHContactInfo*)contact {
+-(void) onCollectibleCollision:(LHContactInfo*)contact {
 	LHSprite* playerSprite = [contact spriteA];
-	LHSprite* obstacleSprite = [contact spriteB];
+	LHSprite* collectibleSprite = [contact spriteB];
 
-	if(playerSprite != nil && obstacleSprite != nil && !obstacleSprite.userData) {
+	if(playerSprite != nil && collectibleSprite != nil && !collectibleSprite.userData) {
 		if(contact.contactType == LH_BEGIN_CONTACT) {
 		
-			obstacleSprite.userData = (void*)true;
+			collectibleSprite.userData = (void*)true;
 		
+			//TODO: differentiate between coins and baddies in another method
 			//if we land on top of baddies - kill them!
-			if(obstacleSprite.position.y < playerSprite.position.y) {
+			if(collectibleSprite.position.y < playerSprite.position.y) {
 
 				//kill the baddie
-				 [_obstaclesToRemove addObject:obstacleSprite];
+				 [_spritesToRemove addObject:collectibleSprite];
 
 				_canDash = true;
 				_dashImpulseUp = [ConfigManager doubleForKey:CONFIG_PLAYER_DASH_IMPULSE_UP];
@@ -139,18 +180,36 @@
 					_sprite.body->GetWorldCenter()
 				);				
 				
-				[_sprite prepareAnimationNamed:[_sprite.animationName stringByReplacingOccurrencesOfString:@"_fly" withString:@"_run"]  fromSHScene:_sprite.animationSHScene];
-				
-				if(_isMoving) {
-					[_sprite playAnimation];
-				}
-				
-				
-			}else {
-				//boooo we die
-				DebugLog(@"OH NO!!!!!!");
-				//[obstacleSprite removeSelf];
 			}
+		}
+	}
+}
+
+-(void) onObstacleCollision:(LHContactInfo*)contact {
+	LHSprite* playerSprite = [contact spriteA];
+	LHSprite* obstacleSprite = [contact spriteB];
+
+	if(playerSprite != nil && obstacleSprite != nil && !obstacleSprite.userData) {
+		if(contact.contactType == LH_BEGIN_CONTACT) {
+		
+			obstacleSprite.userData = (void*)true;
+		
+			//boooo we die
+			_needsToDie = true;
+		}
+	}
+}
+
+-(void) onCoinCollision:(LHContactInfo*)contact {
+	LHSprite* playerSprite = [contact spriteA];
+	LHSprite* coinSprite = [contact spriteB];
+
+	if(playerSprite != nil && coinSprite != nil && !coinSprite.userData) {
+		if(contact.contactType == LH_BEGIN_CONTACT) {
+		
+			coinSprite.userData = (void*)true;
+		
+			//TODO: handle coin collection
 		}
 	}
 }
@@ -167,7 +226,7 @@
 
 
 -(void)dash:(CGPoint)direction {
-	if(true || _canDash) {
+	if(_isAlive && !_needsToDie && _canDash) {
 		DebugLog(@"DASH!! direction = %f,%f", direction.x, direction.y);
 		_isDashing = true;
 		
@@ -190,7 +249,7 @@
 		if(_isOnGround) {
 			_isOnGround = false;
 		}else {
-			_canDash = false;
+			//_canDash = false;
 		}
 		
 	}
@@ -202,7 +261,7 @@
 		_sprite = nil;
 	}
 	
-	[_obstaclesToRemove release];
+	[_spritesToRemove release];
 	
 	[super dealloc];
 }

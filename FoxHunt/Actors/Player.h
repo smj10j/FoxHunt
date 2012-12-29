@@ -32,10 +32,14 @@
 	
 	bool _isOnGround;
 	
+	bool _isDying;
+	bool _isAlive;
+	bool _needsToDie;
+	
 	int _startX;
 	double _lastConfigReload;
 	
-	NSMutableArray* _obstaclesToRemove;
+	NSMutableArray* _spritesToRemove;
 }
 
 -(id)initWithSprite:(LHSprite*)sprite;
@@ -46,9 +50,12 @@
 -(LHSprite*)sprite;
 -(bool)isOnGround;
 -(bool)isDashing;
+-(bool)isAlive;
 
 -(void) onGroundCollision:(LHContactInfo*)contact;
 -(void) onObstacleCollision:(LHContactInfo*)contact;
+-(void) onCollectibleCollision:(LHContactInfo*)contact;
+-(void) onCoinCollision:(LHContactInfo*)contact;
 
 -(void)run;
 -(void)stop;

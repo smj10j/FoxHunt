@@ -67,7 +67,8 @@ enum LevelHelper_TAG
 	PREY 			= 3,
 	COIN 			= 4,
 	OBSTACLE 			= 5,
-	NUMBER_OF_TAGS 	= 6
+	COLLECTIBLE 			= 6,
+	NUMBER_OF_TAGS 	= 7
 };
 
 CGSize  LHSizeFromString(NSString* val);

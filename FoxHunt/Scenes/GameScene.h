@@ -36,6 +36,7 @@ enum GAME_STATE {
 	double _normalParallaxSpeed;
 	
 	int _numObstaclesOnScreen;
+	int _numCollectiblesOnScreen;
 
 	GAME_STATE _state;
 	

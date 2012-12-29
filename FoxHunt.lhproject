@@ -78,6 +78,7 @@
 		<string>PREY</string>
 		<string>COIN</string>
 		<string>OBSTACLE</string>
+		<string>COLLECTIBLE</string>
 	</array>
 </dict>
 </plist>
