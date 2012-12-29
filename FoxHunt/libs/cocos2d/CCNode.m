@@ -656,7 +656,6 @@ static NSUInteger globalOrderOfArrival = 1;
 -(CCAction*) runAction:(CCAction*) action
 {
 	NSAssert( action != nil, @"Argument must be non-nil");
-
 	[actionManager_ addAction:action target:self paused:!isRunning_];
 	return action;
 }

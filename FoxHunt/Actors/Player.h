@@ -27,9 +27,15 @@
 	
 	bool _canDash;
 	bool _isDashing;
-	float _dashImpulse;
+	float _dashImpulseUp;
+	float _dashImpulseDown;
 	
 	bool _isOnGround;
+	
+	int _startX;
+	double _lastConfigReload;
+	
+	NSMutableArray* _obstaclesToRemove;
 }
 
 -(id)initWithSprite:(LHSprite*)sprite;
@@ -42,6 +48,7 @@
 -(bool)isDashing;
 
 -(void) onGroundCollision:(LHContactInfo*)contact;
+-(void) onObstacleCollision:(LHContactInfo*)contact;
 
 -(void)run;
 -(void)stop;

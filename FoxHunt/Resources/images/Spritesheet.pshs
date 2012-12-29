@@ -1422,7 +1422,7 @@
 								<key>IsRectangle</key>
 								<false/>
 								<key>IsSensor</key>
-								<false/>
+								<true/>
 								<key>LHHeight</key>
 								<real>0.0</real>
 								<key>LHShapePositionOffset</key>

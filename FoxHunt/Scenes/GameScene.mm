@@ -87,10 +87,16 @@
 	_player = [[Player alloc] initWithSprite:foxSprite];
 	[_player run];
 	
+	
 	[_levelLoader registerBeginOrEndCollisionCallbackBetweenTagA:PLAYER
 															andTagB:GROUND
 				idListener:_player
 				selListener:@selector(onGroundCollision:)];
+				
+	[_levelLoader registerBeginOrEndCollisionCallbackBetweenTagA:PLAYER
+															andTagB:OBSTACLE
+				idListener:_player
+				selListener:@selector(onObstacleCollision:)];
 }
 
 -(void) initPhysics {
@@ -135,7 +141,7 @@
 		//no step - we're just too dang fast!
 	}
 	
-	if(_lifetime - _lastConfigReload >= GAME_CONFIG_REFRESH_RATE) {
+	if(MODIFYING_GAME_CONFIG && _lifetime - _lastConfigReload >= GAME_CONFIG_REFRESH_RATE) {
 		_lastConfigReload = _lifetime;
 		_normalParallaxSpeed = [ConfigManager intForKey:CONFIG_PARALLAX_SPEED];
 	}
@@ -165,7 +171,7 @@
             if(myActor != 0) {
                 //THIS IS VERY IMPORTANT - GETTING THE POSITION FROM BOX2D TO COCOS2D
                 myActor.position = [LevelHelperLoader metersToPoints:b->GetPosition()];
-                myActor.rotation = -1 * CC_RADIANS_TO_DEGREES(b->GetAngle());
+				myActor.rotation = -1 * CC_RADIANS_TO_DEGREES(b->GetAngle());
             }
             
         }
@@ -178,6 +184,7 @@
 	
 	
 	
+	//generate random obstacles
 	if((int)(_lifetime*10)%10 == 0 && arc4random_uniform(1000) < 200 && _numObstaclesOnScreen < 10) {
 	
 		CGSize winSize = [CCDirector sharedDirector].winSize;
@@ -185,17 +192,18 @@
 		LHSprite* catSprite = [_levelLoader createBatchSpriteWithName:@"object_sleepingcat" fromSheet:@"Obstacles" fromSHFile:@"Spritesheet" tag:OBSTACLE];
 		[_parallaxNode addSprite:catSprite parallaxRatio:ccp(1,0)];
 		[catSprite transformPosition:ccp(
-							arc4random_uniform(winSize.width/2) + winSize.width,
-							arc4random_uniform(winSize.height - 200*SCALING_FACTOR_V) + 150*SCALING_FACTOR_V)
+								arc4random_uniform(winSize.width/2) + winSize.width,
+								140*SCALING_FACTOR_V
+							)
 		];
-		
+				
 		DebugLog(@"adding sprite at %f,%f", catSprite.position.x, catSprite.position.y);
-
-		_numObstaclesOnScreen++;
 	}
 	
 	
+	//destroy offscreen obstacles
 	NSArray* obstacles = [_levelLoader spritesWithTag:OBSTACLE];
+	_numObstaclesOnScreen = [obstacles count];
 	for(LHSprite* obstacle in obstacles) {
 		//DebugLog(@"Checking obstacle at %f,%f", obstacle.position.x, obstacle.position.y);
 		if(obstacle.position.x <= obstacle.boundingBox.size.width) {
@@ -203,7 +211,6 @@
 						[CCFadeOut actionWithDuration:0.5f],
 						[CCCallBlock actionWithBlock:^{
 							[obstacle removeSelf];
-							_numObstaclesOnScreen--;
 							DebugLog(@"Removing offscreen obstacle");
 						}],
 						nil
