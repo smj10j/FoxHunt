@@ -619,7 +619,7 @@
 			<string>PREY</string>
 			<string>COIN</string>
 			<string>OBSTACLE</string>
-			<string>COLLECTIBLE</string>
+			<string>BYSTANDER</string>
 		</array>
 		<key>ZoomValue</key>
 		<real>0.0</real>

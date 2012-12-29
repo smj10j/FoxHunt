@@ -48,7 +48,6 @@
 
 #ifdef __IPHONE_OS_VERSION_MAX_ALLOWED
 
-
 @interface LHBezier : CCNode <CCStandardTouchDelegate, CCTargetedTouchDelegate>
 
 #elif defined(__MAC_OS_X_VERSION_MAX_ALLOWED)

@@ -67,7 +67,7 @@ enum LevelHelper_TAG
 	PREY 			= 3,
 	COIN 			= 4,
 	OBSTACLE 			= 5,
-	COLLECTIBLE 			= 6,
+	BYSTANDER 			= 6,
 	NUMBER_OF_TAGS 	= 7
 };
 

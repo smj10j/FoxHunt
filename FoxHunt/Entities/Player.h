@@ -54,7 +54,7 @@
 
 -(void) onGroundCollision:(LHContactInfo*)contact;
 -(void) onObstacleCollision:(LHContactInfo*)contact;
--(void) onCollectibleCollision:(LHContactInfo*)contact;
+-(void) onBystanderCollision:(LHContactInfo*)contact;
 -(void) onCoinCollision:(LHContactInfo*)contact;
 
 -(void)run;

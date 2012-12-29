@@ -11,6 +11,10 @@
 #import "LevelHelperLoader.h"
 #import "CCPhysicsSprite.h"
 #import "Player.h"
+#import "Obstacle.h"
+#import "Bystander.h"
+#import <list>
+using namespace std;
 
 enum GAME_STATE {
 	SETUP,
@@ -35,8 +39,12 @@ enum GAME_STATE {
 	double _targetParallaxSpeed;
 	double _normalParallaxSpeed;
 	
-	int _numObstaclesOnScreen;
-	int _numCollectiblesOnScreen;
+	list<Obstacle*> _obstacles;
+	list<Bystander*> _bystanders;
+
+	CCLabelTTF* _traveDistanceLabel;
+	double _traveDistanceInPixels;
+	
 
 	GAME_STATE _state;
 	

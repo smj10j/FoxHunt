@@ -521,53 +521,6 @@
 			<key>sourceTree</key>
 			<string>&lt;group&gt;</string>
 		</dict>
-		<key>AA3BF3DC168E16DE00FAD111</key>
-		<dict>
-			<key>children</key>
-			<array>
-				<string>AA3BF3DD168E16DE00FAD111</string>
-				<string>AA3BF3DE168E16DE00FAD111</string>
-			</array>
-			<key>isa</key>
-			<string>PBXGroup</string>
-			<key>path</key>
-			<string>Actors</string>
-			<key>sourceTree</key>
-			<string>&lt;group&gt;</string>
-		</dict>
-		<key>AA3BF3DD168E16DE00FAD111</key>
-		<dict>
-			<key>fileEncoding</key>
-			<string>4</string>
-			<key>isa</key>
-			<string>PBXFileReference</string>
-			<key>lastKnownFileType</key>
-			<string>sourcecode.c.h</string>
-			<key>path</key>
-			<string>Player.h</string>
-			<key>sourceTree</key>
-			<string>&lt;group&gt;</string>
-		</dict>
-		<key>AA3BF3DE168E16DE00FAD111</key>
-		<dict>
-			<key>fileEncoding</key>
-			<string>4</string>
-			<key>isa</key>
-			<string>PBXFileReference</string>
-			<key>lastKnownFileType</key>
-			<string>sourcecode.cpp.objcpp</string>
-			<key>path</key>
-			<string>Player.mm</string>
-			<key>sourceTree</key>
-			<string>&lt;group&gt;</string>
-		</dict>
-		<key>AA3BF3DF168E16DE00FAD111</key>
-		<dict>
-			<key>fileRef</key>
-			<string>AA3BF3DE168E16DE00FAD111</string>
-			<key>isa</key>
-			<string>PBXBuildFile</string>
-		</dict>
 		<key>AA3BF401168E360100FAD111</key>
 		<dict>
 			<key>isa</key>
@@ -767,6 +720,123 @@
 		<dict>
 			<key>fileRef</key>
 			<string>AAC4BBFB168CFA800086A379</string>
+			<key>isa</key>
+			<string>PBXBuildFile</string>
+		</dict>
+		<key>AAE27AC7168F78E900984941</key>
+		<dict>
+			<key>children</key>
+			<array>
+				<string>AAE27ACE168F7DA400984941</string>
+				<string>AAE27ACF168F7DA400984941</string>
+				<string>AAE27AC8168F78E900984941</string>
+				<string>AAE27AC9168F78E900984941</string>
+				<string>AAE27ACA168F78E900984941</string>
+				<string>AAE27ACB168F78E900984941</string>
+			</array>
+			<key>isa</key>
+			<string>PBXGroup</string>
+			<key>path</key>
+			<string>Entities</string>
+			<key>sourceTree</key>
+			<string>&lt;group&gt;</string>
+		</dict>
+		<key>AAE27AC8168F78E900984941</key>
+		<dict>
+			<key>fileEncoding</key>
+			<string>4</string>
+			<key>isa</key>
+			<string>PBXFileReference</string>
+			<key>lastKnownFileType</key>
+			<string>sourcecode.c.h</string>
+			<key>path</key>
+			<string>Obstacle.h</string>
+			<key>sourceTree</key>
+			<string>&lt;group&gt;</string>
+		</dict>
+		<key>AAE27AC9168F78E900984941</key>
+		<dict>
+			<key>fileEncoding</key>
+			<string>4</string>
+			<key>isa</key>
+			<string>PBXFileReference</string>
+			<key>lastKnownFileType</key>
+			<string>sourcecode.cpp.objcpp</string>
+			<key>path</key>
+			<string>Obstacle.mm</string>
+			<key>sourceTree</key>
+			<string>&lt;group&gt;</string>
+		</dict>
+		<key>AAE27ACA168F78E900984941</key>
+		<dict>
+			<key>fileEncoding</key>
+			<string>4</string>
+			<key>isa</key>
+			<string>PBXFileReference</string>
+			<key>lastKnownFileType</key>
+			<string>sourcecode.c.h</string>
+			<key>path</key>
+			<string>Player.h</string>
+			<key>sourceTree</key>
+			<string>&lt;group&gt;</string>
+		</dict>
+		<key>AAE27ACB168F78E900984941</key>
+		<dict>
+			<key>fileEncoding</key>
+			<string>4</string>
+			<key>isa</key>
+			<string>PBXFileReference</string>
+			<key>lastKnownFileType</key>
+			<string>sourcecode.cpp.objcpp</string>
+			<key>path</key>
+			<string>Player.mm</string>
+			<key>sourceTree</key>
+			<string>&lt;group&gt;</string>
+		</dict>
+		<key>AAE27ACC168F78E900984941</key>
+		<dict>
+			<key>fileRef</key>
+			<string>AAE27AC9168F78E900984941</string>
+			<key>isa</key>
+			<string>PBXBuildFile</string>
+		</dict>
+		<key>AAE27ACD168F78E900984941</key>
+		<dict>
+			<key>fileRef</key>
+			<string>AAE27ACB168F78E900984941</string>
+			<key>isa</key>
+			<string>PBXBuildFile</string>
+		</dict>
+		<key>AAE27ACE168F7DA400984941</key>
+		<dict>
+			<key>fileEncoding</key>
+			<string>4</string>
+			<key>isa</key>
+			<string>PBXFileReference</string>
+			<key>lastKnownFileType</key>
+			<string>sourcecode.c.h</string>
+			<key>path</key>
+			<string>Bystander.h</string>
+			<key>sourceTree</key>
+			<string>&lt;group&gt;</string>
+		</dict>
+		<key>AAE27ACF168F7DA400984941</key>
+		<dict>
+			<key>fileEncoding</key>
+			<string>4</string>
+			<key>isa</key>
+			<string>PBXFileReference</string>
+			<key>lastKnownFileType</key>
+			<string>sourcecode.cpp.objcpp</string>
+			<key>path</key>
+			<string>Bystander.mm</string>
+			<key>sourceTree</key>
+			<string>&lt;group&gt;</string>
+		</dict>
+		<key>AAE27AD0168F7DA400984941</key>
+		<dict>
+			<key>fileRef</key>
+			<string>AAE27ACF168F7DA400984941</string>
 			<key>isa</key>
 			<string>PBXBuildFile</string>
 		</dict>
@@ -1002,7 +1072,9 @@
 				<string>AAF3E4211687956E0096D7C6</string>
 				<string>AAF3E4271687956E0096D7C6</string>
 				<string>AAF3E4511687A0330096D7C6</string>
-				<string>AA3BF3DF168E16DE00FAD111</string>
+				<string>AAE27ACC168F78E900984941</string>
+				<string>AAE27ACD168F78E900984941</string>
+				<string>AAE27AD0168F7DA400984941</string>
 				<string>da8ae1a3ed563136e9d0c419</string>
 				<string>d89955832a2f30a40fc0378f</string>
 				<string>1acdb9308d35abe583a4f523</string>
@@ -1367,7 +1439,7 @@
 			<key>children</key>
 			<array>
 				<string>AAF3E316168791E80096D7C6</string>
-				<string>AA3BF3DC168E16DE00FAD111</string>
+				<string>AAE27AC7168F78E900984941</string>
 				<string>AAF3E32C168794EC0096D7C6</string>
 				<string>AAF3E31E168791F50096D7C6</string>
 				<string>AAF3E2E7168788C20096D7C6</string>

@@ -36,13 +36,12 @@
 		_state = SETUP;
 		_fixedTimestepAccumulator = 0;
 		
-		_numCollectiblesOnScreen = 0;
-		_numObstaclesOnScreen = 0;
 		_normalParallaxSpeed = [ConfigManager intForKey:CONFIG_PARALLAX_SPEED];
 		_targetParallaxSpeed = _normalParallaxSpeed;
 
 		CGSize winSize = [CCDirector sharedDirector].winSize;
 		[LevelHelperLoader dontStretchArt];
+		[LevelHelperLoader setMeterRatio:PTM_RATIO];
 		
 		// init physics
 		[self initPhysics];
@@ -70,6 +69,32 @@
 			//create level-specified gravity
 			[_levelLoader createGravity:_world];
 		}
+		
+		_traveDistanceLabel = [CCLabelTTF labelWithString:@"" fontName:@"Helvetica" fontSize:24*SCALING_FACTOR_FONTS];
+		_traveDistanceLabel.position = ccp(winSize.width-_traveDistanceLabel.boundingBox.size.width - 40, winSize.height-_traveDistanceLabel.boundingBox.size.height - 20);
+		[self addChild:_traveDistanceLabel];
+
+
+		//create obstacles
+		for(int i = 0; i < 10; i++) {
+			LHSprite* obstacleSprite = [_levelLoader createBatchSpriteWithName:@"object_sleepingdog" fromSheet:@"Obstacles" fromSHFile:@"Spritesheet" tag:OBSTACLE];
+			[_parallaxNode addSprite:obstacleSprite parallaxRatio:ccp(1,0)];
+			
+			Obstacle* obstacle = [[Obstacle alloc] initWithSprite:obstacleSprite];
+			obstacleSprite.userData = obstacle;
+			_obstacles.push_back(obstacle);
+		}
+
+
+		//create bystanders
+		for(int i = 0; i < 10; i++) {
+			LHSprite* bystanderSprite = [_levelLoader createBatchSpriteWithName:@"object_sleepingcat" fromSheet:@"Obstacles" fromSHFile:@"Spritesheet" tag:BYSTANDER];
+			[_parallaxNode addSprite:bystanderSprite parallaxRatio:ccp(1,0)];
+			
+			Bystander* bystander = [[Bystander alloc] initWithSprite:bystanderSprite];
+			bystanderSprite.userData = bystander;
+			_bystanders.push_back(bystander);
+		}
 
 		[self setupPlayer];
 		
@@ -82,7 +107,7 @@
 -(void) setupPlayer {
 
 	LHSprite* foxSprite = [_levelLoader createSpriteWithName:@"rocketmouse_1_run" fromSheet:@"Actors" fromSHFile:@"Spritesheet" tag:PLAYER parent:_mainLayer];
-	[foxSprite transformPosition:ccp(200*SCALING_FACTOR_H, _levelSize.height/2)];
+	[foxSprite transformPosition:ccp(0, _levelSize.height/2)];
 	[foxSprite prepareAnimationNamed:@"Player_run" fromSHScene:@"Spritesheet"];
 	
 	_player = [[Player alloc] initWithSprite:foxSprite];
@@ -100,9 +125,9 @@
 				selListener:@selector(onObstacleCollision:)];
 				
 	[_levelLoader registerBeginOrEndCollisionCallbackBetweenTagA:PLAYER
-															andTagB:COLLECTIBLE
+															andTagB:BYSTANDER
 				idListener:_player
-				selListener:@selector(onCollectibleCollision:)];
+				selListener:@selector(onBystanderCollision:)];
 				
 				
 	[_levelLoader registerBeginOrEndCollisionCallbackBetweenTagA:PLAYER
@@ -129,6 +154,16 @@
 }
 
 -(void) update: (ccTime) dt {
+
+	if(![_player isAlive]) {
+		//TODO: go to menu
+		[self restart];
+		return;
+	}
+
+	_lifetime+= dt;
+	_traveDistanceInPixels+= dt*_parallaxNode.speed;
+	_traveDistanceLabel.string = [NSString stringWithFormat:@"%dm", (int)(_traveDistanceInPixels/PTM_RATIO)];
 	
 	_fixedTimestepAccumulator+= dt;
 	//DebugLog(@"dt = %f, _fixedTimestepAccumulator = %f", dt, _fixedTimestepAccumulator);
@@ -161,16 +196,8 @@
 
 -(void) singleUpdateStep:(ccTime) dt {
 	
-	_lifetime+= dt;
-
 	//DebugLog(@"singleUpdateStep. _fixedTimestepAccumulator = %f", _fixedTimestepAccumulator);
-
-	if(![_player isAlive]) {
-		//TODO: go to menu
-		[self restart];
-		return;
-	}
-
+	
 	const static int32 velocityIterations = 8;
 	const static int32 positionIterations = 1;
 	
@@ -195,68 +222,56 @@
 	
 	//tell the player to update itself
 	[_player update:dt];
-
+	
+	for(Obstacle* obstacle : _obstacles) {
+		[obstacle update:dt];
+	}
+	
+	for(Bystander* bystander : _bystanders) {
+		[bystander update:dt];
+	}
 	
 	[self updateParallaxSpeed];
 	
 	
 	
-	//generate random collectibles
-	if((int)(_lifetime*10)%10 == 0 && arc4random_uniform(1000) < 200 && _numCollectiblesOnScreen < 10) {
-		[self addCollectible];
+	//generate random bystanders
+	if((int)(_lifetime*10)%10 == 0 && arc4random_uniform(1000) < 200) {
+		[self addBystander];
 	}
 	//generate random obstacles
-	if((int)(_lifetime*10)%10 == 0 && arc4random_uniform(1000) < 200 && _numCollectiblesOnScreen < 10) {
+	if((int)(_lifetime*10)%10 == 0 && arc4random_uniform(1000) < 200) {
 		[self addObstacle];
 	}
 		
-	[self destroyOffscreenSprites];
 }
 
-//TODO: change this naming to something more inline with the game once we know what it is
--(void)addCollectible {
+-(void)addBystander {
 	CGSize winSize = [CCDirector sharedDirector].winSize;
-
-	LHSprite* collectibleSprite = [_levelLoader createBatchSpriteWithName:@"object_sleepingcat" fromSheet:@"Obstacles" fromSHFile:@"Spritesheet" tag:COLLECTIBLE];
-	[_parallaxNode addSprite:collectibleSprite parallaxRatio:ccp(1,0)];
-	[collectibleSprite transformPosition:ccp(
+	
+	for(Bystander* bystander : _bystanders) {
+		if(![bystander isAlive]) {
+			[bystander makeAliveAt: ccp(
 							arc4random_uniform(winSize.width/2) + winSize.width,
-							(arc4random_uniform(40)+80)*SCALING_FACTOR_V
+							arc4random_uniform(winSize.height)
 						)
-	];
-			
-	DebugLog(@"adding collectible sprite at %f,%f", collectibleSprite.position.x, collectibleSprite.position.y);
+			];
+			break;
+		}
+	}
 }
 
 -(void)addObstacle {
 	CGSize winSize = [CCDirector sharedDirector].winSize;
 
-	LHSprite* obstacleSprite = [_levelLoader createBatchSpriteWithName:@"object_sleepingdog" fromSheet:@"Obstacles" fromSHFile:@"Spritesheet" tag:OBSTACLE];
-	[_parallaxNode addSprite:obstacleSprite parallaxRatio:ccp(1,0)];
-	[obstacleSprite transformPosition:ccp(
+	for(Obstacle* obstacle : _obstacles) {
+		if(![obstacle isAlive]) {
+			[obstacle makeAliveAt: ccp(
 							arc4random_uniform(winSize.width/2) + winSize.width,
 							arc4random_uniform(winSize.height)
 						)
-	];
-			
-	DebugLog(@"adding obstacle sprite at %f,%f", obstacleSprite.position.x, obstacleSprite.position.y);
-}
-
--(void)destroyOffscreenSprites {
-	//destroy offscreen obstacles
-	NSArray* obstacles = [_levelLoader spritesWithTag:OBSTACLE];
-	_numObstaclesOnScreen = [obstacles count];
-	for(LHSprite* obstacle in obstacles) {
-		//DebugLog(@"Checking obstacle at %f,%f", obstacle.position.x, obstacle.position.y);
-		if(obstacle.position.x <= obstacle.boundingBox.size.width) {
-			[obstacle runAction:[CCSequence actions:
-						[CCFadeOut actionWithDuration:0.5f],
-						[CCCallBlock actionWithBlock:^{
-							[obstacle removeSelf];
-							DebugLog(@"Removing offscreen obstacle");
-						}],
-						nil
-			]];
+			];
+			break;
 		}
 	}
 }
@@ -273,6 +288,9 @@
 }
 
 - (void)restart {
+
+	[self unscheduleUpdate];
+	
 	[[CCDirector sharedDirector] replaceScene:[CCTransitionFadeBL transitionWithDuration:0.5 scene:[GameScene scene]]];
 }
 
@@ -358,6 +376,16 @@
 		[_player release];
 		_player = nil;
 	}
+	
+	for(Obstacle* obstacle : _obstacles) {
+		[obstacle release];
+	}
+	_obstacles.clear();
+	
+	for(Bystander* bystander : _bystanders) {
+		[bystander release];
+	}
+	_bystanders.clear();
 	
 	[_levelLoader removeAllPhysics];
 	[_levelLoader release];
