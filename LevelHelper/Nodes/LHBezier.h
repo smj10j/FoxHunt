@@ -47,17 +47,32 @@
 @class LevelHelperLoader;
 
 #ifdef __IPHONE_OS_VERSION_MAX_ALLOWED
+
 @interface LHBezier : CCNode <CCStandardTouchDelegate, CCTargetedTouchDelegate>
+
 #elif defined(__MAC_OS_X_VERSION_MAX_ALLOWED)
 @interface LHBezier : CCNode <CCMouseEventDelegate>
 #endif
 {
+    int             line_pointCount;
+    CGPoint*        line_points;
+    ccColor4F*      line_colors;
+#if COCOS2D_VERSION >= 0x00020000
+    CCGLProgram*    lineShaderProgram;
+#endif
     
-    #if COCOS2D_VERSION >= 0x00020000
-    CCGLProgram *mShaderProgram;
-	GLint		mColorLocation;
-    #endif
+    int             tile_pointCount;
+    CGPoint*        tile_points;
+	CGPoint*        tile_texCoords;
+    ccColor4F*      tile_colors;
     
+    __strong CCTexture2D*    tile_texture;
+	ccBlendFunc     tile_blendFunc;
+	
+
+    NSMutableArray* pathPoints;
+    CGRect color;
+	CGRect lineColor;
 	bool isClosed;
 	bool isTile;
 	bool isVisible;
@@ -65,26 +80,14 @@
 	bool isLine;
 	bool isPath;
     float opacity;
+    float lineWidth;
 	NSString* uniqueName;
+    
 #ifdef LH_USE_BOX2D
 	b2Body* body; //can be 0
 #endif
-	NSMutableArray* pathPoints;
-	//NSMutableSet* pathNodes;
 	
 	
-	/////////for the tile feature
-	CCTexture2D *texture;
-	CGRect color;
-	CGRect lineColor;
-	float lineWidth;
-	CGSize winSize;
-	NSMutableArray* trianglesHolder;
-	NSMutableArray* linesHolder;
-    
-    NSMutableArray* blendingTextures;
-	CGSize imageSize;
-    
     LHObserverPair* touchBeginObserver;
     LHObserverPair* touchMovedObserver;
     LHObserverPair* touchEndedObserver;
@@ -126,18 +129,8 @@
 -(b2Body*)body;
 #endif
 
-//THIS WORKS ONLY WHEN THE BEZIER SHAPE IS A TILE SHAPE
--(void) pushBlendingTextureNamed:(NSString*) texName
-                      shouldTile:(bool)tile
-                  blendingSource:(GLenum)blendSource
-             blendingDestination:(GLenum)blendDestination;
-
-//this uses the default blendSource GL_DST_COLOR and blendDestination GL_ZERO
--(void) pushBlendingTextureNamed:(NSString*) texName
-                      shouldTile:(bool)tile; 
-
-//this uses the default blendSource and blendDestination and tile is set to YES
--(void) pushBlendingTextureNamed:(NSString*) texName; 
+-(void) setBlendFunction:(ccBlendFunc)blendFuncIn;
+-(ccBlendFunc) blendFunction;
 
 
 //CLASS METHODS

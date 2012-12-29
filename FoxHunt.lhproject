@@ -76,8 +76,8 @@
 		<string>PLAYER</string>
 		<string>GROUND</string>
 		<string>PREY</string>
-		<string>LOG</string>
 		<string>COIN</string>
+		<string>OBSTACLE</string>
 	</array>
 </dict>
 </plist>

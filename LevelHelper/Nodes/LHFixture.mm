@@ -181,7 +181,10 @@
                 if([[LHSettings sharedInstance] convertLevel]){
                     //circle look weird if we dont do this
                     float scaleSpr = [sprite scaleX];
+                    bool usesOverloadTransform = [sprite usesOverloadedTransformations];
+                    [sprite setUsesOverloadedTransformations:NO];
                     [sprite setScaleY:scaleSpr];
+                    [sprite setUsesOverloadedTransformations:usesOverloadTransform];
                 }
                 
                 float circleScale = scale.x; //if we dont do this we dont have collision

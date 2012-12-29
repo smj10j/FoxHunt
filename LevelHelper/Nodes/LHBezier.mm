@@ -19,7 +19,7 @@
 //  Altered source versions must be plainly marked as such, and must not be
 //  misrepresented as being the original software.
 //  This notice may not be removed or altered from any source distribution.
-//  By "software" the author refers to this code file and not the application 
+//  By "software" the author refers to this code file and not the application
 //  that was used to generate this file.
 //
 ////////////////////////////////////////////////////////////////////////////////
@@ -40,106 +40,12 @@
 #import <OpenGL/OpenGL.h>
 #endif
 
-
-typedef struct _ccV3F_C4B_T2F_Triangle
-{
-	//! top left
-	ccV3F_C4B_T2F	tl;
-    //! top right
-	ccV3F_C4B_T2F	tr;
-	//! bottom
-	ccV3F_C4B_T2F	bc;
-    
-} lhV3F_C4B_T2F_Triangle;
-
-
-typedef struct lhV3F_C4B
-{
-    ccVertex3F point;
-    ccColor4B color;    
-} lhV3F_C4B;
-
-
-
-typedef struct lhV3F_Line
-{
-	lhV3F_C4B	A;
-	lhV3F_C4B	B;   
-} lhV3F_Line;
-
-
-@interface LHBezierBlendingInfo : NSObject
-{
-    CCTexture2D* texture;
-    GLenum blendSource;
-    GLenum blendDestination;
-    bool tile;
-}
-
-+(id) bezierBlendingInfoWithTexture:(CCTexture2D*)tex
-                        blendSource:(GLenum)source
-                   blendDestination:(GLenum)destination
-                               tile:(bool)shouldTile;
-
--(id) initBezierBlendingInfoWithTexture:(CCTexture2D*)tex
-                            blendSource:(GLenum)source
-                       blendDestination:(GLenum)destination
-                                   tile:(bool)shouldTile;
-
--(CCTexture2D*) texture;
--(GLenum) blendSource;
--(GLenum) blendDestination;
--(bool) tile;
-@end
-//------------------------------------------------------------------------------
-@implementation LHBezierBlendingInfo
--(void) dealloc{
-#ifndef LH_ARC_ENABLED
-	[super dealloc];
-#endif
-}
-+(id) bezierBlendingInfoWithTexture:(CCTexture2D*)tex
-                        blendSource:(GLenum)source
-                   blendDestination:(GLenum)destination
-                               tile:(bool)shouldTile;
-{
-#ifndef LH_ARC_ENABLED
-	return [[[self alloc] initBezierBlendingInfoWithTexture:tex
-                                                blendSource:source
-                                           blendDestination:destination
-                                                       tile:shouldTile] autorelease];
-#else
-    return [[self alloc] initBezierBlendingInfoWithTexture:tex
-                                                blendSource:source
-                                           blendDestination:destination
-                                                       tile:shouldTile];
-#endif
-}
--(id) initBezierBlendingInfoWithTexture:(CCTexture2D*)tex
-                            blendSource:(GLenum)source
-                       blendDestination:(GLenum)destination
-                                   tile:(bool)shouldTile{
-	if( (self=[super init])) {
-        texture = tex;
-        blendSource = source;
-        blendDestination = destination;
-        tile = shouldTile;
-	}
-	return self;
-}
-
--(CCTexture2D*) texture{return texture;}
--(GLenum) blendSource{return blendSource;}
--(GLenum) blendDestination{return blendDestination;}
--(bool) tile{return tile;}
-
-@end
-
-
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 @interface LHBezier (Private)
-
+-(void) setupTileShapePoints: (NSArray *) points;
+-(void) setupLinePoints:(NSArray*)points;
+-(void) setupTileShapeTexCoordinates;
 @end
 ////////////////////////////////////////////////////////////////////////////////
 @implementation LHBezier
@@ -149,16 +55,242 @@ typedef struct lhV3F_Line
 @synthesize isLine;
 @synthesize swallowTouches;
 ////////////////////////////////////////////////////////////////////////////////
--(void) dealloc{		
+-(void) setupTileShapePoints: (NSArray *) points {
     
-//    NSLog(@"LHBezier Dealloc %@", uniqueName);
+    if (tile_points)
+        free(tile_points);
+    if (tile_texCoords)
+        free(tile_texCoords);
+    if(tile_colors)
+        free(tile_colors);
+    
+    //LH sends the points triangulated
+    
+    tile_pointCount = [points count];
+    tile_points = (CGPoint *) malloc(sizeof(CGPoint) * tile_pointCount);
+    tile_texCoords = (CGPoint *) malloc(sizeof(CGPoint) * tile_pointCount);
+    tile_colors = (ccColor4F *) malloc(sizeof(ccColor4F) * tile_pointCount);
+    
+    int i = 0;
+    for(NSValue* value in points){
+        
+        CGPoint pt = LHPointFromValue(value);
+        
+#if COCOS2D_VERSION >= 0x00020000
+        tile_points[i] = pt;
+#else
+        tile_points[i].x = pt.x*CC_CONTENT_SCALE_FACTOR();;
+        tile_points[i].y = pt.y*CC_CONTENT_SCALE_FACTOR();;
+#endif
+        
+        tile_colors[i] = ccc4f(color.origin.x,
+                               color.origin.y,
+                               color.size.width,
+                               opacity);
+        
+        ++i;
+    }
+    [self setupTileShapeTexCoordinates];
+}
+
+-(void)setupLinePoints:(NSArray*)points{
+    
+    if(line_points)
+        free(line_points);
+    if(line_colors)
+        free(line_colors);
+    
+    line_pointCount = [points count];
+    line_points = (CGPoint *) malloc(sizeof(CGPoint) * line_pointCount);
+    line_colors = (ccColor4F *) malloc(sizeof(ccColor4F) * line_pointCount);
+    
+    int i = 0;
+    for(NSValue* value in points){
+        
+        CGPoint pt = LHPointFromValue(value);
+        
+#if COCOS2D_VERSION >= 0x00020000
+        line_points[i] = pt;
+#else
+        line_points[i].x = pt.x*CC_CONTENT_SCALE_FACTOR();;
+        line_points[i].y = pt.y*CC_CONTENT_SCALE_FACTOR();;
+#endif
+        
+        line_colors[i] = ccc4f(lineColor.origin.x,
+                               lineColor.origin.y,
+                               lineColor.size.width,
+                               opacity);
+        
+        ++i;
+    }
+}
+
+-(void) setupTileShapeTexCoordinates{
+    for(int i = 0; i< tile_pointCount; ++i){
+        CGPoint pt = tile_points[i];
+        tile_texCoords[i].x = pt.x/(tile_texture.pixelsWide/CC_CONTENT_SCALE_FACTOR());
+        tile_texCoords[i].y = 1.0f -  pt.y/(tile_texture.pixelsHigh/CC_CONTENT_SCALE_FACTOR());
+    }
+}
+
+#if COCOS2D_VERSION >= 0x00020000
+-(void) draw{
+    
+    if(!isVisible)
+        return;
+    
+    
+    if(tile_texture == nil || (drawBorder && tile_texture))
+    {
+        float oldLineWidth = 1.0f;
+        glGetFloatv(GL_LINE_WIDTH, &oldLineWidth);
+        glLineWidth(lineWidth*CC_CONTENT_SCALE_FACTOR());
+        
+        
+        ccGLEnable( glServerState_ );
+        [lineShaderProgram use];
+        
+#if COCOS2D_VERSION >= 0x00020100
+        [lineShaderProgram setUniformsForBuiltins];
+#else
+        [lineShaderProgram setUniformForModelViewProjectionMatrix];
+#endif
+        ccGLEnableVertexAttribs( kCCVertexAttribFlag_Position | kCCVertexAttribFlag_Color);
+        
+        glVertexAttribPointer(kCCVertexAttrib_Position, 2, GL_FLOAT, GL_FALSE, 0, line_points);
+        glVertexAttribPointer(kCCVertexAttrib_Color, 4, GL_FLOAT, GL_TRUE, 0, line_colors);
+        glDrawArrays(GL_LINES, 0, line_pointCount);
+        
+        glLineWidth(oldLineWidth);
+    }
+    
+    CC_NODE_DRAW_SETUP();
+    
+    if(tile_texture){
+        ccGLBindTexture2D(tile_texture.name );
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+        ccGLBlendFunc( tile_blendFunc.src, tile_blendFunc.dst);
+	}
+    ccGLEnableVertexAttribs( kCCVertexAttribFlag_Position | kCCVertexAttribFlag_TexCoords | kCCVertexAttribFlag_Color);
+    
+    glVertexAttribPointer(kCCVertexAttrib_Position, 2, GL_FLOAT, GL_FALSE, 0, tile_points);
+    glVertexAttribPointer(kCCVertexAttrib_TexCoords, 2, GL_FLOAT, GL_FALSE, 0, tile_texCoords);
+    glVertexAttribPointer(kCCVertexAttrib_Color, 4, GL_FLOAT, GL_TRUE, 0, tile_colors);
+    
+    glDrawArrays(GL_TRIANGLES, 0, tile_pointCount);
+    
+    CC_INCREMENT_GL_DRAWS(1);
+    CHECK_GL_ERROR_DEBUG();
+}
+#else
+-(void) draw{
+    
+    if(!isVisible)
+        return;
+    
+    
+    if(tile_texture == nil || (drawBorder && tile_texture))
+    {
+        glDisable(GL_TEXTURE_2D);
+        float oldLineWidth = 1.0f;
+        glGetFloatv(GL_LINE_WIDTH, &oldLineWidth);
+        glLineWidth(lineWidth*CC_CONTENT_SCALE_FACTOR());
+        
+        glVertexPointer(2, GL_FLOAT, 0, line_points);
+        glColorPointer(4, GL_FLOAT, 0, line_colors);
+        glDrawArrays(GL_LINES, 0, line_pointCount);
+        
+        glLineWidth(oldLineWidth);
+        glEnable(GL_TEXTURE_2D);
+    }
+    
+    
+    
+    
+    // we have a pointer to vertex points so enable client state
+    glBindTexture(GL_TEXTURE_2D, tile_texture.name);
+    
+    glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL);
+    
+    glVertexPointer(2, GL_FLOAT, 0, tile_points);
+    glTexCoordPointer(2, GL_FLOAT, 0, tile_texCoords);
+    glColorPointer(4, GL_FLOAT, 0, tile_colors);
+    
+    glDrawArrays(GL_TRIANGLES, 0, tile_pointCount);
+    glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+    
+    //Restore texture matrix and switch back to modelview matrix
+    glEnableClientState(GL_COLOR_ARRAY);
+}
+#endif
+
+
+-(void) updateBlendFunc {
+	if( !tile_texture || ! [tile_texture hasPremultipliedAlpha] ) {
+		tile_blendFunc.src = GL_SRC_ALPHA;
+		tile_blendFunc.dst = GL_ONE_MINUS_SRC_ALPHA;
+	} else {
+		tile_blendFunc.src = CC_BLEND_SRC;
+		tile_blendFunc.dst = CC_BLEND_DST;
+	}
+}
+
+-(void) setBlendFunction:(ccBlendFunc)blendFuncIn {
+	tile_blendFunc = blendFuncIn;
+}
+
+-(ccBlendFunc) blendFunction {
+	return tile_blendFunc;
+}
+
+-(void) setTexture:(CCTexture2D *) texture2D {
+	
+	// accept texture==nil as argument
+    if(texture2D == nil)return;
+
+#ifndef LH_ARC_ENABLED
+	[tile_texture release];
+#endif
+    
+    tile_texture = nil;
+
+#ifndef LH_ARC_ENABLED
+	tile_texture = [texture2D retain];
+#else
+    tile_texture = texture2D;
+#endif
+    
+	ccTexParams texParams = { GL_NEAREST, GL_NEAREST, GL_REPEAT, GL_REPEAT };
+	[tile_texture setTexParameters: &texParams];
+	
+	[self updateBlendFunc];
+	[self setupTileShapeTexCoordinates];
+}
+
+-(CCTexture2D *) texture {
+	return tile_texture;
+}
+
+
+-(void) dealloc{
+    
+    //    NSLog(@"LHBezier Dealloc %@", uniqueName);
     
     [LevelHelperLoader removeTouchDispatcherFromObject:self];
-
+    
     [self removeBodyFromWorld];
     
-#ifndef LH_ARC_ENABLED    
+    free(tile_points);
+	free(tile_texCoords);
+    free(tile_colors);
     
+    free(line_points);
+	free(line_colors);
+    
+#ifndef LH_ARC_ENABLED
+    
+    [tile_texture release];
     if(userCustomInfo){
         [userCustomInfo release];
         userCustomInfo = nil;
@@ -169,18 +301,15 @@ typedef struct lhV3F_Line
     if(touchBeginObserver)
         [touchMovedObserver release];
     if(touchBeginObserver)
-        [touchEndedObserver release];    
-
-    if(texture)
-        [texture release];
-    [blendingTextures release];
-	[uniqueName release];	
+        [touchEndedObserver release];
+    
+	[uniqueName release];
 	[pathPoints release];
-	[linesHolder release];
-	[trianglesHolder release];
-
+    
 	[super dealloc];
 #endif
+    
+    tile_texture = nil;
 }
 
 -(void)removeBodyFromWorld{
@@ -215,7 +344,7 @@ typedef struct lhV3F_Line
     
 #ifdef LH_USE_BOX2D
     if(body){
-        if(body->GetWorld()->IsLocked()){            
+        if(body->GetWorld()->IsLocked()){
             [[LHSettings sharedInstance] markBezierForRemoval:self];
             return;
         }
@@ -226,8 +355,9 @@ typedef struct lhV3F_Line
 }
 
 -(void) onExit{
-//    NSLog(@"LHBEZIER %@ onExit", uniqueName);
+    //    NSLog(@"LHBEZIER %@ onExit", uniqueName);
     [LevelHelperLoader removeTouchDispatcherFromObject:self];
+    [super onExit];
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -241,42 +371,27 @@ typedef struct lhV3F_Line
     var3 = t * t * t;
     vPoint.x = var2*p1.x + 3*t*var1*var1*p2.x + 3*t*t*var1*p3.x + var3*p4.x;
     vPoint.y = var2*p1.y + 3*t*var1*var1*p2.y + 3*t*t*var1*p3.y + var3*p4.y;
-    return(vPoint);				
+    return(vPoint);
 }
 ////////////////////////////////////////////////////////////////////////////////
--(void) initTileVerticesFromDictionary:(NSDictionary*)dictionary tileVertices:(NSArray*)fixtures
+-(void) initTileAndPathVerticesFromDictionary:(NSDictionary*)dictionary
+                                 tileVertices:(NSArray*)fixtures
 {
-	trianglesHolder = [[NSMutableArray alloc] init];
-    
-//#if COCOS2D_VERSION >= 0x00020000
-//    float scale = 1;
-//#else
-//    float scale = CC_CONTENT_SCALE_FACTOR();
-//#endif
-//
-//    NSLog(@"SCALE IS %f", scale);
-    
-    
-	for(NSArray* fix in fixtures)
-	{
-		NSMutableArray* triangle = [[NSMutableArray alloc] init];
-		for(NSString* pt in fix)
-		{
+    NSMutableArray* points = [NSMutableArray array];
+ 	for(NSArray* fix in fixtures){
+		for(NSString* pt in fix){
 			CGPoint point = LHPointFromString(pt);
-			
             point = [[LHSettings sharedInstance] transformedPointToCocos2d:point];
-
-			[triangle addObject:LHValueWithCGPoint(point)];
+            [points addObject:LHValueWithCGPoint(point)];
 		}
-		
-		[trianglesHolder addObject:triangle];
-#ifndef LH_ARC_ENABLED
-		[triangle release];
-#endif
-	}	
+	}
+    [self setupTileShapePoints:points];
 	
+    int i = 0;
 	
-	linesHolder = [[NSMutableArray alloc] init];
+    pathPoints = [[NSMutableArray alloc] init];
+    
+    NSMutableArray* linepoints = [NSMutableArray array];
 	if(isVisible)
 	{
 		NSArray* curvesInShape = [dictionary objectForKey:@"Curves"];
@@ -289,7 +404,7 @@ typedef struct lhV3F_Line
 			CGPoint startCtrlPt = [curvDict pointForKey:@"StartControlPoint"];
 			CGPoint endPt       = [curvDict pointForKey:@"EndPoint"];
 			CGPoint startPt     = [curvDict pointForKey:@"StartPoint"];
-			            
+            
 			if(!isLine)
 			{
 				CGPoint prevPoint;
@@ -303,138 +418,52 @@ typedef struct lhV3F_Line
                                                          p4:endPt
                                                           t:t];
 					
+                    CGPoint curPoint = [[LHSettings sharedInstance] transformedPointToCocos2d:vPoint];
+                    [pathPoints addObject:LHValueWithCGPoint(curPoint)];
+                    
 					if(!firstPt)
 					{
+                        
                         CGPoint pt1 = [[LHSettings sharedInstance] transformedPointToCocos2d:prevPoint];
                         CGPoint pt2 = [[LHSettings sharedInstance] transformedPointToCocos2d:vPoint];
                         
-						[linesHolder addObject:LHValueWithCGPoint(pt1)];
-						[linesHolder addObject:LHValueWithCGPoint(pt2)];
+						[linepoints addObject:LHValueWithCGPoint(pt1)];
+						[linepoints addObject:LHValueWithCGPoint(pt2)];
 					}
 					prevPoint = vPoint;
-					firstPt = false;					
+					firstPt = false;
 				}
 			}
 			else
 			{
-				
                 CGPoint pos1 = [[LHSettings sharedInstance] transformedPointToCocos2d:startPt];
                 CGPoint pos2 = [[LHSettings sharedInstance] transformedPointToCocos2d:endPt];
                 
-				[linesHolder addObject:LHValueWithCGPoint(pos1)];
-				[linesHolder addObject:LHValueWithCGPoint(pos2)];
+				[linepoints addObject:LHValueWithCGPoint(pos1)];
+				[linepoints addObject:LHValueWithCGPoint(pos2)];
 				
+                
+                [pathPoints addObject:LHValueWithCGPoint(pos1)];
+                if(i == (int)[curvesInShape count]-1){
+                    [pathPoints addObject:LHValueWithCGPoint(pos2)];
+                }
+                ++i;
 			}
 		}
 	}
-}
-
-////////////////////////////////////////////////////////////////////////////////
--(void) initPathPointsFromDictionary:(NSDictionary*)bezierDict
-{
-	pathPoints = [[NSMutableArray alloc] init];
-	
-    NSArray* curvesInShape = [bezierDict objectForKey:@"Curves"];    
-    int MAX_STEPS = 25;    
-//	CGPoint conv = [[LHSettings sharedInstance] convertRatio];
-	int i = 0;
-    
-    
-//    float scale = 1;
-//    if([[LHSettings sharedInstance] isIphone5])
-//        scale = [[CCDirector sharedDirector] contentScaleFactor];
-
-    
-//    CGPoint pos_offset = [[LHSettings sharedInstance] possitionOffset];
-//    CGPoint user_offset = [[LHSettings sharedInstance] userOffset];
-    
-    for(NSDictionary* curvDict in curvesInShape)
-    {
-        CGPoint endCtrlPt   = [curvDict pointForKey:@"EndControlPoint"];
-        CGPoint startCtrlPt = [curvDict pointForKey:@"StartControlPoint"];
-        CGPoint endPt       = [curvDict pointForKey:@"EndPoint"];
-        CGPoint startPt     = [curvDict pointForKey:@"StartPoint"];
-		
-		
-		if(!isLine)
-        {
-            for(float t = 0; t <= (1 + (1.0f / MAX_STEPS)); t += 1.0f / MAX_STEPS)
-            {
-                CGPoint vPoint = [LHBezier pointOnCurve:startPt
-														 p2:startCtrlPt
-														 p3:endCtrlPt
-														 p4:endPt
-														  t:t];
-                
-                vPoint = [[LHSettings sharedInstance] transformedPointToCocos2d:vPoint];
-//                
-//				vPoint = CGPointMake(vPoint.x*conv.x, 
-//                                     winSize.height - vPoint.y*conv.y);
-//
-//                vPoint.x += pos_offset.x/scale;
-//                vPoint.y -= pos_offset.y/scale;
-//                
-//                vPoint.x += user_offset.x/scale;
-//                vPoint.y -= user_offset.y/scale;
-                
-                [pathPoints addObject:LHValueWithCGPoint(vPoint)];
-            }
-			
-			[pathPoints removeLastObject];
-        }
-        else
-        {
-            CGPoint sPoint = [[LHSettings sharedInstance] transformedPointToCocos2d:startPt];
-            
-//            CGPoint sPoint = CGPointMake(startPt.x*conv.x, 
-//                                 winSize.height - startPt.y*conv.y);
-//            
-//            sPoint.x += pos_offset.x/scale;
-//            sPoint.y -= pos_offset.y/scale;
-//            
-//            sPoint.x += user_offset.x/scale;
-//            sPoint.y -= user_offset.y/scale;
-//            
-            
-            [pathPoints addObject:LHValueWithCGPoint(sPoint)];            
-            
-            if(i == (int)[curvesInShape count]-1)
-            {
-                CGPoint ePoint = [[LHSettings sharedInstance] transformedPointToCocos2d:endPt];
-                
-//                CGPoint ePoint = CGPointMake(endPt.x*conv.x, 
-//                                             winSize.height - endPt.y*conv.y);
-//                
-//                ePoint.x += pos_offset.x/scale;
-//                ePoint.y -= pos_offset.y/scale;
-//                
-//                ePoint.x += user_offset.x/scale;
-//                ePoint.y -= user_offset.y/scale;
-                
-                [pathPoints addObject:LHValueWithCGPoint(ePoint)]; 
-            }
-            ++i;            
-        }
-	}	
-	
+    [self setupLinePoints:linepoints];
 }
 ////////////////////////////////////////////////////////////////////////////////
 #ifdef LH_USE_BOX2D
--(void) createBodyFromDictionary:(NSDictionary*)dictionary physicWorld:(b2World*)world
+-(void) createBodyFromDictionary:(NSDictionary*)dictionary
+                     physicWorld:(b2World*)world
 {
-        
-//	if(isPath)
-//		return;
-//	
-//	if([pathPoints count] < 2)
-//		return;
-	
-	b2BodyDef bodyDef;	
+	b2BodyDef bodyDef;
 	
 	int bodyType = [dictionary intForKey:@"Type"];
 	if(bodyType > 2)
         return;
-              
+    
 	bodyDef.type = (b2BodyType)bodyType;
     
 	bodyDef.position.Set(0.0f, 0.0f);
@@ -447,30 +476,30 @@ typedef struct lhV3F_Line
 #endif
 	
 	body = world->CreateBody(&bodyDef);
-	
 	float ptm = [[LHSettings sharedInstance] lhPtmRatio];
-
-    for(NSArray* fix in trianglesHolder)
+    
+    
+    NSArray* fixtures = [dictionary objectForKey:@"TileVertices"];
+ 	for(NSArray* fix in fixtures)
     {
         int size = (int)[fix count];
         b2Vec2 *verts = new b2Vec2[size];
         int i = 0;
+        
         for(int j = (int)[fix count]-1; j >=0; --j)
         {
-            NSValue* val = [fix objectAtIndex:(NSUInteger)j];
-                        
-            CGPoint pt = LHPointFromValue(val);
+            CGPoint point = LHPointFromString([fix objectAtIndex:j]);
+            point = [[LHSettings sharedInstance] transformedPointToCocos2d:point];
             
-            verts[i].x = pt.x/ptm;
-            verts[i].y = pt.y/ptm;            
+            verts[i].x = point.x/ptm;
+            verts[i].y = point.y/ptm;
             ++i;
         }
-
+        
         b2PolygonShape shape;
-        shape.Set(verts, size);		
+        shape.Set(verts, size);
         
         b2FixtureDef fixture;
-        
         
         fixture.density = [dictionary floatForKey:@"Density"];
 		fixture.friction = [dictionary floatForKey:@"Friction"];
@@ -485,15 +514,16 @@ typedef struct lhV3F_Line
         fixture.shape = &shape;
         body->CreateFixture(&fixture);
         delete[] verts;
-    }		
+	}
     
-    //we test for the version of box2d here 
-#ifdef B2_CHAIN_SHAPE_H    
+    
+    //we test for the version of box2d here
+#ifdef B2_CHAIN_SHAPE_H
     if([pathPoints count] > 0)
     {
-    
+        
         b2Vec2 * verts = new b2Vec2 [(int)[pathPoints count]];
-
+        
         int i = 0;
         for(NSValue* val in pathPoints)
         {
@@ -502,27 +532,27 @@ typedef struct lhV3F_Line
             verts [i]. y = pt.y / ptm;
             ++i;
         }
-
+        
         b2ChainShape shape;
         shape.CreateChain (verts, (int)[pathPoints count]);
         
         b2FixtureDef fixture;
-    
-    
+        
+        
         fixture.density = [dictionary floatForKey:@"Density"];
         fixture.friction = [dictionary floatForKey:@"Friction"];
         fixture.restitution = [dictionary floatForKey:@"Restitution"];
-    
+        
         fixture.filter.categoryBits = (uint16)[dictionary intForKey:@"Category"];
         fixture.filter.maskBits = (uint16)[dictionary intForKey:@"Mask"];
         fixture.filter.groupIndex = (int16)[dictionary intForKey:@"Group"];
-    
+        
         fixture.isSensor = [dictionary boolForKey:@"IsSensor"];
-
+        
         fixture.shape = &shape;
         body-> CreateFixture (& fixture);
         delete [] verts;
-    }   
+    }
     
 #else //old box2d library
     
@@ -537,60 +567,61 @@ typedef struct lhV3F_Line
         int group = [dictionary intForKey:@"Group"];
         
         int isSensor = [dictionary boolForKey:@"IsSensor"];
-
+        
         CGPoint firstPt;
-        int j = 0; 
+        int j = 0;
         for(int i = 0; i < [pathPoints count]; ++i)
         {
             if(j < [pathPoints count])
             {
-            NSValue* val1 = [pathPoints objectAtIndex:j + 0];
-            CGPoint pt1 = LHPointFromValue(val1);
-
-            if(j == 0)
-                firstPt = pt1;
-
-            CGPoint pt2 = firstPt;
-
-            if(j+1 < [pathPoints count])
-            {
-                NSValue* val2 = [pathPoints objectAtIndex:j+1];
-                pt2 = LHPointFromValue(val2);
-            }
-            
-            j+=2;
-            
-            b2Vec2 *verts = new b2Vec2[2];
-            b2PolygonShape shape;
-            
-            verts [0]. x = pt1.x / ptm;
-            verts [0]. y = pt1.y / ptm;
-            
-            verts [1]. x = pt2.x / ptm;
-            verts [1]. y = pt2.y / ptm;
-            
-            shape.Set(verts, 2);		
-            b2FixtureDef fixture;
-            
-            fixture.density = density;
-            fixture.friction = friction;
-            fixture.restitution = restitution;
-            
-            fixture.filter.categoryBits = categoryBits;
-            fixture.filter.maskBits = maskBits;
-            fixture.filter.groupIndex = group;
-            
-            fixture.isSensor = isSensor;
-
-            fixture.shape = &shape;
-            body->CreateFixture(&fixture);
-            
-            delete [] verts;
+                NSValue* val1 = [pathPoints objectAtIndex:j + 0];
+                CGPoint pt1 = LHPointFromValue(val1);
+                
+                if(j == 0)
+                    firstPt = pt1;
+                
+                CGPoint pt2 = firstPt;
+                
+                if(j+1 < [pathPoints count])
+                {
+                    NSValue* val2 = [pathPoints objectAtIndex:j+1];
+                    pt2 = LHPointFromValue(val2);
+                }
+                
+                j+=2;
+                
+                b2Vec2 *verts = new b2Vec2[2];
+                b2PolygonShape shape;
+                
+                verts [0]. x = pt1.x / ptm;
+                verts [0]. y = pt1.y / ptm;
+                
+                verts [1]. x = pt2.x / ptm;
+                verts [1]. y = pt2.y / ptm;
+                
+                shape.Set(verts, 2);
+                b2FixtureDef fixture;
+                
+                fixture.density = density;
+                fixture.friction = friction;
+                fixture.restitution = restitution;
+                
+                fixture.filter.categoryBits = categoryBits;
+                fixture.filter.maskBits = maskBits;
+                fixture.filter.groupIndex = group;
+                
+                fixture.isSensor = isSensor;
+                
+                fixture.shape = &shape;
+                body->CreateFixture(&fixture);
+                
+                delete [] verts;
             }
         }
-    }  
+    }
     
 #endif
+    
 }
 #endif
 
@@ -607,7 +638,8 @@ typedef struct lhV3F_Line
 #ifndef LH_ARC_ENABLED
     [userCustomInfo retain];
 #endif
-    [userCustomInfo performSelector:@selector(setPropertiesFromDictionary:) withObject:[dictionary objectForKey:@"ClassRepresentation"]];
+    [userCustomInfo performSelector:@selector(setPropertiesFromDictionary:)
+                         withObject:[dictionary objectForKey:@"ClassRepresentation"]];
 }
 -(NSString*)userInfoClassName{
     if(userCustomInfo)
@@ -617,16 +649,13 @@ typedef struct lhV3F_Line
 //------------------------------------------------------------------------------
 
 ////////////////////////////////////////////////////////////////////////////////
--(id) initWithDictionary:(NSDictionary*)dictionary 
+-(id) initWithDictionary:(NSDictionary*)dictionary
 {
 	self = [super init];
 	if (self != nil)
 	{
-        uniqueName = [[NSString alloc] initWithString:[dictionary stringForKey:@"UniqueName"]];		
-        blendingTextures = [[NSMutableArray alloc] init];
-
+        uniqueName = [[NSString alloc] initWithString:[dictionary stringForKey:@"UniqueName"]];
         NSDictionary* textureDict = [dictionary objectForKey:@"TextureProperties"];
-
         
 		isClosed	= [textureDict boolForKey:@"IsClosed"];
 		isTile		= [textureDict boolForKey:@"IsTile"];
@@ -634,7 +663,10 @@ typedef struct lhV3F_Line
 		isLine		= [textureDict boolForKey:@"IsSimpleLine"];
 		isPath		= [textureDict boolForKey:@"IsPath"];
         opacity     = [textureDict floatForKey:@"Opacity"];
-		
+		color       = [textureDict rectForKey:@"Color"];
+		lineColor   = [textureDict rectForKey:@"LineColor"];
+		lineWidth   = [textureDict floatForKey:@"LineWidth"];
+        
         if([textureDict objectForKey:@"DrawBorder"])
             drawBorder  = [textureDict boolForKey:@"DrawBorder"];
         else
@@ -642,59 +674,27 @@ typedef struct lhV3F_Line
         
 		[self setTag:[textureDict intForKey:@"Tag"]];
 		[self setVertexZ:[textureDict intForKey:@"ZOrder"]];
+        
+        
 #if COCOS2D_VERSION >= 0x00020000
-		[self setZOrder:[textureDict intForKey:@"ZOrder"]];
+        [self setZOrder:[textureDict intForKey:@"ZOrder"]];
+        self.shaderProgram = [[CCShaderCache sharedShaderCache] programForKey:kCCShader_PositionTextureColor];
+        lineShaderProgram = [[CCShaderCache sharedShaderCache] programForKey:kCCShader_PositionColor];
 #else
         zOrder_ = [textureDict intForKey:@"ZOrder"]; //this property is read only on cocos2d 1.0
 #endif
         
-        
-		NSString* img = [textureDict stringForKey:@"ImageFile"];
-                
-		imageSize = CGSizeZero;
-        texture = nil;
-        
-#if COCOS2D_VERSION >= 0x00020000
-        self.shaderProgram = [[CCShaderCache sharedShaderCache] programForKey:kCCShader_PositionColor];       
-        mShaderProgram = [[CCShaderCache sharedShaderCache] programForKey:kCCShader_Position_uColor];
-        mColorLocation = glGetUniformLocation( mShaderProgram->program_, "u_color");
-#endif
-        
-		if(![img isEqualToString:@""] && ![img isEqualToString:@"No Image"])
-		{
-            
-#if COCOS2D_VERSION >= 0x00020000
-            NSString* path = [[CCFileUtils sharedFileUtils] fullPathFromRelativePath:img];
-#else
-            NSString* path = [CCFileUtils fullPathFromRelativePath:img];
-#endif
-			texture = [[CCTextureCache sharedTextureCache] addImage:path];
-           
-			if( texture ) {
-                #ifndef LH_ARC_ENABLED
-                    [texture retain];
-                #endif
-                
-                #if COCOS2D_VERSION >= 0x00020000
-                self.shaderProgram = [[CCShaderCache sharedShaderCache] programForKey:kCCShader_PositionTextureColor]; 
-                #endif
-                
-				imageSize = texture.contentSize;
-			}
+        NSString* img = [textureDict stringForKey:@"ImageFile"];
+		if(![img isEqualToString:@""] && ![img isEqualToString:@"No Image"]){
+            NSString* path = [[LHSettings sharedInstance] imagePath:img];
+			[self setTexture:[[CCTextureCache sharedTextureCache] addImage:path]];
 		}
 		
-		//CGPoint convert = [[LHSettings sharedInstance] convertRatio];
-		winSize = [[CCDirector sharedDirector] winSize];		
-		
-		
-		color       = [textureDict rectForKey:@"Color"];
-		lineColor   = [textureDict rectForKey:@"LineColor"];
-		lineWidth   = [textureDict floatForKey:@"LineWidth"];
-    
         NSDictionary* physicsDict = [dictionary objectForKey:@"PhysicsProperties"];
-		[self initTileVerticesFromDictionary:textureDict tileVertices:[physicsDict objectForKey:@"TileVertices"]];
-		[self initPathPointsFromDictionary:textureDict];	
-		
+		[self initTileAndPathVerticesFromDictionary:textureDict
+                                       tileVertices:[physicsDict objectForKey:@"TileVertices"]];
+        
+        
 #ifdef LH_USE_BOX2D
         b2World* world = [[LHSettings sharedInstance] activeBox2dWorld];
         if(NULL != world)
@@ -709,9 +709,11 @@ typedef struct lhV3F_Line
         tagTouchMovedObserver = nil;
         tagTouchEndedObserver = nil;
         
-         [self loadUserCustomInfoFromDictionary:[dictionary objectForKey:@"CustomClassInfo"]];
+        [self loadUserCustomInfoFromDictionary:[dictionary objectForKey:@"CustomClassInfo"]];
         
         [LevelHelperLoader setTouchDispatcherForObject:self tag:(int)self.tag];
+        
+        [self setAnchorPoint:ccp(0,0)];
 	}
 	return self;
 }
@@ -735,361 +737,8 @@ typedef struct lhV3F_Line
 }
 #endif
 ////////////////////////////////////////////////////////////////////////////////
--(void)visit
-{
-	[super visit];
-}
-////////////////////////////////////////////////////////////////////////////////
-#if COCOS2D_VERSION >= 0x00020000
--(void)draw{ //COCOS2D 2.0 draw call with GLES 2.0
-            
-    [super draw];
-    
-    if(!isVisible)
-    {
-        return;
-    }
-//            CC_NODE_DRAW_SETUP();
-        
-    ccGLEnable( glServerState_ );																\
-    NSAssert1(shaderProgram_, @"No shader program set for node: %@", self);                      \
-    [shaderProgram_ use];
-    
-    #if COCOS2D_VERSION >= 0x00020100
-        [shaderProgram_ setUniformsForBuiltins];
-    #else
-        [shaderProgram_ setUniformForModelViewProjectionMatrix];
-    #endif
-    
-    int size = (int)[trianglesHolder count];
-    
-    lhV3F_C4B_T2F_Triangle points[size];// = new ccV3F_C4B_T2F_Triangle[size];
-    
-    ccColor4B colorVert = { (GLubyte)(color.origin.x*255.0f), 
-                            (GLubyte)(color.origin.y*255.0f), 
-                            (GLubyte)(color.size.width*255.0f), 
-                            (GLubyte)(opacity*255.0f)};
-    
-    for(int k = 0; k < (int)[trianglesHolder count]; ++k)
-    {
-        NSArray* fix = [trianglesHolder objectAtIndex:(NSUInteger)k];
-        
-        for(int j = 0; j < 3; ++j)
-        {
-            NSValue* val  = [fix objectAtIndex:(NSUInteger)j];
-            
-            CGPoint pt = LHPointFromValue(val);
-            
-            ccVertex3F vert = {pt.x, pt.y, 0};
-            ccTex2F tex = { (pt.x/imageSize.width), 
-                ((winSize.height - pt.y)/imageSize.height)};
-            
-            if(j == 0)
-            {
-                points[k].tl.vertices = vert;
-                points[k].tl.colors = colorVert;
-                points[k].tl.texCoords = tex;                
-            }
-            else if(j == 1)
-            {
-                points[k].tr.vertices = vert;
-                points[k].tr.colors = colorVert;
-                points[k].tr.texCoords = tex;                                    
-            }
-            else if (j == 2)
-            {
-                points[k].bc.vertices = vert;
-                points[k].bc.colors = colorVert;
-                points[k].bc.texCoords = tex;                
-            }
-        }
-    }
-    
-    
-    ccBlendFunc	blendFunc_;				// Needed for the texture protocol
-    
-    blendFunc_.src = GL_SRC_ALPHA;
-    blendFunc_.dst = GL_ONE_MINUS_SRC_ALPHA;
-    
-    
-    ccGLEnableVertexAttribs( kCCVertexAttribFlag_PosColorTex );
-    
-    ccGLBlendFunc( blendFunc_.src, blendFunc_.dst );
-    
-    if(texture)
-    {
-        ccGLBindTexture2D( texture.name );
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    }
-    
-#define kPointSize sizeof(ccV3F_C4B_T2F)
-    long offset = (long)&points;
-    
-    // vertex
-    NSInteger diff = offsetof( ccV3F_C4B_T2F, vertices);
-    glVertexAttribPointer(kCCVertexAttrib_Position, 3, GL_FLOAT, GL_FALSE, kPointSize, (void*) (offset + diff));
-    
-    // texCoods
-    diff = offsetof( ccV3F_C4B_T2F, texCoords);
-    glVertexAttribPointer(kCCVertexAttrib_TexCoords, 2, GL_FLOAT, GL_FALSE, kPointSize, (void*)(offset + diff));
-    
-    // color
-    diff = offsetof( ccV3F_C4B_T2F, colors);
-    glVertexAttribPointer(kCCVertexAttrib_Color, 4, GL_UNSIGNED_BYTE, GL_TRUE, kPointSize, (void*)(offset + diff));
-    
-    glDrawArrays(GL_TRIANGLES, 0, 3*size);
-    
-    
-    bool wasBlend = glIsEnabled(GL_BLEND);
-    glEnable(GL_BLEND);            
-    
-    for(LHBezierBlendingInfo* info in blendingTextures)
-    {
-        CCTexture2D* tex = [info texture];
-        if(NULL != tex)
-        {
-            glBlendFunc([info blendSource], [info blendDestination]);
-            glBindTexture(GL_TEXTURE_2D, [tex name]);
-            
-            if([info tile]){
-                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-            }
-            
-            glDrawArrays(GL_TRIANGLES, 0, 3*size);
-        }
-    }
-    
-    if(!wasBlend)
-        glDisable(GL_BLEND);
-    
-    if(drawBorder)
-    {
-    float oldLineWidth = 1.0f;
-    glGetFloatv(GL_LINE_WIDTH, &oldLineWidth); 
-    
-#ifdef __CC_PLATFORM_IOS
-    glLineWidth(lineWidth*[[CCDirector sharedDirector] contentScaleFactor]);
-#else
-    glLineWidth(lineWidth);
-#endif
-    
-    ccColor4F colorLineVert = { (lineColor.origin.x),
-                                (lineColor.origin.y),
-                                (lineColor.size.width),
-                                (opacity)};
-    
-    
-    int linesNo = (int)[linesHolder count];
-    
-    [mShaderProgram use];
-        
-#if COCOS2D_VERSION >= 0x00020100
-        [shaderProgram_ setUniformsForBuiltins];
-#else
-        [shaderProgram_ setUniformForModelViewProjectionMatrix];
-#endif
-	[mShaderProgram setUniformLocation:(NSUInteger)mColorLocation withF1:colorLineVert.r f2:colorLineVert.g f3:colorLineVert.b f4:colorLineVert.a];
-    
-    
-    CGPoint* line_verts = new CGPoint[[linesHolder count]];
-    for(int i = 0; i < (int)[linesHolder count]; i+=2)
-    {
-        CGPoint pt1 = LHPointFromValue([linesHolder objectAtIndex:(NSUInteger)i]);
-        CGPoint pt2 = LHPointFromValue([linesHolder objectAtIndex:(NSUInteger)(i+1)]);
-        
-        line_verts[i] = pt1;
-        line_verts[i+1] = pt2;            
-    }  
-    glVertexAttribPointer(kCCVertexAttrib_Position, 2, GL_FLOAT, GL_FALSE, 0, line_verts);
-    
-	glDrawArrays(GL_LINES, 0, linesNo);
-	
-	CC_INCREMENT_GL_DRAWS(1);
-    
-    delete[] line_verts;
-    }
-    
-	CHECK_GL_ERROR_DEBUG();
-}
-#else
-
--(void)draw
-{
-    if(!isVisible)
-        return;
-    
-    float scale = CC_CONTENT_SCALE_FACTOR();
-
-	if(0.0f != [[LHSettings sharedInstance] customAlpha])
-	{
-		glColor4f(color.origin.x, 
-				  color.origin.y, 
-				  color.size.width, 
-				  opacity*[[LHSettings sharedInstance] customAlpha]);
-		glPushMatrix();
-		
-        glDisableClientState(GL_COLOR_ARRAY);
-        
-		glEnable(GL_TEXTURE_2D);		
-		glBindTexture(GL_TEXTURE_2D, texture.name);
-		
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-		        
-        int size = (int)[trianglesHolder count];
-        CGPoint* glVertices = new CGPoint[size*3];
-        CGPoint* glUV = new CGPoint[size*3];
-        for(int k = 0; k < (int)[trianglesHolder count]; ++k)
-        {
-            NSArray* fix = [trianglesHolder objectAtIndex:k];
-            
-            for(int j = 0; j < 3; ++j)
-			{
-                NSValue* val  = [fix objectAtIndex:j];
-                
-				CGPoint pt = LHPointFromValue(val);
-                
-                pt.x *= scale;
-                pt.y *= scale;
-
-                
-				glVertices[k*3 +j] =pt;
-				
-				glUV[k*3+j].x = (pt.x/imageSize.width);
-				glUV[k*3+j].y = ((winSize.height - pt.y)/imageSize.height);
-			}
-        }
-        glTexCoordPointer(2, GL_FLOAT, 0, glUV);
-        glVertexPointer(2, GL_FLOAT, 0, glVertices);
-        glDrawArrays(GL_TRIANGLES, 0, 3*size);
-        
-        
-        bool wasBlend = glIsEnabled(GL_BLEND);
-        glEnable(GL_BLEND);            
-        int oldBlendDST = 0;
-        glGetIntegerv(GL_BLEND_DST, &oldBlendDST);
-        int oldBlendSRC = 0;
-        glGetIntegerv(GL_BLEND_SRC, &oldBlendSRC);
-        
-        for(LHBezierBlendingInfo* info in blendingTextures)
-        {
-            CCTexture2D* tex = [info texture];
-            if(NULL != tex)
-            {
-                glBlendFunc([info blendSource], [info blendDestination]);
-                glBindTexture(GL_TEXTURE_2D, [tex name]);
-                
-                if([info tile]){
-                    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-                    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-                }
-                
-                glTexCoordPointer(2, GL_FLOAT, 0, glUV);
-                glVertexPointer(2, GL_FLOAT, 0, glVertices);
-                glDrawArrays(GL_TRIANGLES, 0, 3*size);                
-            }
-        }
-        
-        glBlendFunc(oldBlendSRC, oldBlendDST);
-        if(!wasBlend)
-            glDisable(GL_BLEND);
-        
-        
-        delete[] glVertices;
-        delete[] glUV;
-        
-        if(drawBorder)
-        {
-            float oldLineWidth = 1.0f;
-            glGetFloatv(GL_LINE_WIDTH, &oldLineWidth); 
-            
-
-    #ifdef __CC_PLATFORM_IOS
-            glLineWidth(lineWidth*[[CCDirector sharedDirector] contentScaleFactor]);
-    #else
-            glLineWidth(lineWidth);
-    #endif
-            
-            glDisable(GL_TEXTURE_2D);
-            glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-            glColor4f(lineColor.origin.x, 
-                      lineColor.origin.y, 
-                      lineColor.size.width, 
-                      opacity*[[LHSettings sharedInstance] customAlpha]);
-            
-            CGPoint* line_verts = new CGPoint[[linesHolder count]];
-            for(int i = 0; i < (int)[linesHolder count]; i+=2)
-            {
-                CGPoint pt1 = LHPointFromValue([linesHolder objectAtIndex:i]);
-                CGPoint pt2 = LHPointFromValue([linesHolder objectAtIndex:i+1]);
-                
-                pt1.x *= scale;
-                pt1.y *= scale;
-                
-                pt2.x *= scale;
-                pt2.y *= scale;
-                
-                line_verts[i] = pt1;
-                line_verts[i+1] = pt2;            
-            }
-            glVertexPointer(2, GL_FLOAT, 0, line_verts);
-            glDrawArrays(GL_LINES, 0, (int)[linesHolder count]);
-            delete[] line_verts;
-            
-            glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-            glEnableClientState(GL_COLOR_ARRAY);
-            glLineWidth(oldLineWidth);
-        }
-        glEnable(GL_TEXTURE_2D);
-        glPopMatrix();
-        
-        
-	}
-}
-#endif
-////////////////////////////////////////////////////////////////////////////////
--(void) pushBlendingTextureNamed:(NSString*) texName
-                      shouldTile:(bool)tile
-                  blendingSource:(GLenum)blendSource
-             blendingDestination:(GLenum)blendDestination{
-    
-    
-    if(!isTile)
-        return;
-    
-    CCTexture2D* tex = [[CCTextureCache sharedTextureCache] addImage:texName];
-    if(NULL != tex){
-        LHBezierBlendingInfo* info = [LHBezierBlendingInfo bezierBlendingInfoWithTexture:tex 
-                                                                             blendSource:blendSource 
-                                                                        blendDestination:blendDestination
-                                                                                    tile:tile];
-        [blendingTextures addObject:info];
-    }
-}
-//------------------------------------------------------------------------------
--(void) pushBlendingTextureNamed:(NSString*) texName
-                      shouldTile:(bool)tile{
-
-    [self pushBlendingTextureNamed:texName
-                        shouldTile:tile
-                    blendingSource:GL_DST_COLOR
-               blendingDestination:GL_ZERO];
-}
-//------------------------------------------------------------------------------
--(void) pushBlendingTextureNamed:(NSString*) texName{    
-    [self pushBlendingTextureNamed:texName
-                        shouldTile:YES
-                    blendingSource:GL_DST_COLOR
-               blendingDestination:GL_ZERO];
-}
-////////////////////////////////////////////////////////////////////////////////
 +(bool) isLHBezier:(id)object{
-    if([object isKindOfClass:[LHBezier class]]){
-        return true;
-    }
-    return false;
+    return [object isKindOfClass:[LHBezier class]];
 }
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
@@ -1100,7 +749,7 @@ typedef struct lhV3F_Line
     {
         b2Fixture* stFix = body->GetFixtureList();
         while(stFix != 0){
-            if(stFix->TestPoint(b2Vec2(point.x/[[LHSettings sharedInstance] lhPtmRatio], 
+            if(stFix->TestPoint(b2Vec2(point.x/[[LHSettings sharedInstance] lhPtmRatio],
                                        point.y/[[LHSettings sharedInstance] lhPtmRatio]))){
                 return true;
             }
@@ -1121,7 +770,7 @@ typedef struct lhV3F_Line
         NSLog(@"Touch Events on bezier objects can only be performed on Tiled Shapes beziers. Touch Event Will be ignored.");
         return;
     }
-
+    
     if(nil == touchBeginObserver)
         touchBeginObserver = [LHObserverPair observerPair];
     
@@ -1139,19 +788,19 @@ typedef struct lhV3F_Line
         NSLog(@"Touch Events on bezier objects can only be performed on Tiled Shapes beziers. Touch Event Will be ignored.");
         return;
     }
-
+    
     if(nil == touchMovedObserver)
         touchMovedObserver = [LHObserverPair observerPair];
     
     touchMovedObserver.object = observer;
     touchMovedObserver.selector = selector;
 #ifndef LH_ARC_ENABLED
-    [touchMovedObserver retain];    
+    [touchMovedObserver retain];
 #endif
 }
 //------------------------------------------------------------------------------
 -(void)registerTouchEndedObserver:(id)observer selector:(SEL)selector{
-
+    
     if(!isTile){
         NSLog(@"Touch Events on bezier objects can only be performed on Tiled Shapes beziers. Touch Event Will be ignored.");
         return;
@@ -1161,7 +810,7 @@ typedef struct lhV3F_Line
         touchEndedObserver = [LHObserverPair observerPair];
     
     touchEndedObserver.object = observer;
-    touchEndedObserver.selector = selector; 
+    touchEndedObserver.selector = selector;
 #ifndef LH_ARC_ENABLED
     [touchEndedObserver retain];
 #endif
@@ -1169,7 +818,7 @@ typedef struct lhV3F_Line
 //------------------------------------------------------------------------------
 //------------------------------------------------------------------------------
 #ifdef __MAC_OS_X_VERSION_MAX_ALLOWED
-//for left mouse events use the touch observers from above 
+//for left mouse events use the touch observers from above
 -(void)registerRightMouseDownObserver:(id)observer selector:(SEL)selector{
     if(nil == rightMouseDownObserver)
         rightMouseDownObserver = [LHObserverPair observerPair];
@@ -1200,7 +849,7 @@ typedef struct lhV3F_Line
     rightMouseUpObserver.selector = selector;
 #ifndef LH_ARC_ENABLED
     [rightMouseUpObserver retain];
-#endif    
+#endif
 }
 #endif
 //------------------------------------------------------------------------------
@@ -1208,9 +857,9 @@ typedef struct lhV3F_Line
 //------------------------------------------------------------------------------
 #ifdef __IPHONE_OS_VERSION_MAX_ALLOWED
 - (BOOL)ccTouchBegan:(UITouch *)touch withEvent:(UIEvent *)event{
-    CGPoint touchPoint = [touch locationInView:[touch view]];    
-    touchPoint=  [[CCDirector sharedDirector] convertToGL:touchPoint];    
-
+    CGPoint touchPoint = [touch locationInView:[touch view]];
+    touchPoint=  [[CCDirector sharedDirector] convertToGL:touchPoint];
+    
     
     if([self isTouchedAtPoint:touchPoint])
     {
@@ -1222,21 +871,21 @@ typedef struct lhV3F_Line
         info.touch = touch;
         info.bezier = self;
         info.delta = CGPointZero;
-
+        
         [LHObserverPair performObserverPair:touchBeginObserver object:info];
-        [LHObserverPair performObserverPair:tagTouchBeginObserver object:info]; 
-
+        [LHObserverPair performObserverPair:tagTouchBeginObserver object:info];
+        
         return swallowTouches;
     }
     return NO;
 }
 //------------------------------------------------------------------------------
-- (void)ccTouchMoved:(UITouch *)touch withEvent:(UIEvent *)event{    
+- (void)ccTouchMoved:(UITouch *)touch withEvent:(UIEvent *)event{
     CGPoint touchPoint = [touch locationInView:[touch view]];
     touchPoint=  [[CCDirector sharedDirector] convertToGL:touchPoint];
     
     CGPoint prevLocation = [touch previousLocationInView:[touch view]];
-    prevLocation = [[CCDirector sharedDirector] convertToGL:prevLocation];    
+    prevLocation = [[CCDirector sharedDirector] convertToGL:prevLocation];
     
     LHTouchInfo* info = [LHTouchInfo touchInfo];
     info.relativePoint = CGPointMake(touchPoint.x - self.position.x,
@@ -1249,17 +898,17 @@ typedef struct lhV3F_Line
     info.bezier = self;
     
     [LHObserverPair performObserverPair:touchMovedObserver object:info];
-    [LHObserverPair performObserverPair:tagTouchMovedObserver object:info];     
+    [LHObserverPair performObserverPair:tagTouchMovedObserver object:info];
 }
 //------------------------------------------------------------------------------
 - (void)ccTouchEnded:(UITouch *)touch withEvent:(UIEvent *)event{
     
     CGPoint touchPoint = [touch locationInView:[touch view]];
     touchPoint=  [[CCDirector sharedDirector] convertToGL:touchPoint];
-
+    
     CGPoint prevLocation = [touch previousLocationInView:[touch view]];
-    prevLocation = [[CCDirector sharedDirector] convertToGL:prevLocation];    
-
+    prevLocation = [[CCDirector sharedDirector] convertToGL:prevLocation];
+    
     LHTouchInfo* info = [LHTouchInfo touchInfo];
     info.relativePoint = CGPointMake(touchPoint.x - self.position.x,
                                      touchPoint.y - self.position.y);
@@ -1269,14 +918,14 @@ typedef struct lhV3F_Line
     info.bezier = self;
     info.delta = CGPointMake(touchPoint.x - prevLocation.x,
                              touchPoint.y - prevLocation.y);
-
+    
     [LHObserverPair performObserverPair:touchEndedObserver object:info];
-    [LHObserverPair performObserverPair:tagTouchEndedObserver object:info];         
+    [LHObserverPair performObserverPair:tagTouchEndedObserver object:info];
 }
 //------------------------------------------------------------------------------
 #elif defined(__MAC_OS_X_VERSION_MAX_ALLOWED)
 //------------------------------------------------------------------------------
--(BOOL) ccMouseDown:(NSEvent*)event{   
+-(BOOL) ccMouseDown:(NSEvent*)event{
     
     CGPoint touchPoint = [(CCDirectorMac*)[CCDirector sharedDirector] convertEventToGL:event];
     
@@ -1293,7 +942,7 @@ typedef struct lhV3F_Line
         info.delta = CGPointZero;
         
         [LHObserverPair performObserverPair:touchBeginObserver object:info];
-        [LHObserverPair performObserverPair:tagTouchBeginObserver object:info]; 
+        [LHObserverPair performObserverPair:tagTouchBeginObserver object:info];
         
         return swallowTouches;
     }
@@ -1304,9 +953,9 @@ typedef struct lhV3F_Line
     
     if(!mouseDownStarted)
         return NO;
-
+    
     CGPoint touchPoint = [(CCDirectorMac*)[CCDirector sharedDirector] convertEventToGL:event];
-            
+    
     LHTouchInfo* info = [LHTouchInfo touchInfo];
     info.relativePoint = CGPointMake(touchPoint.x - self.position.x,
                                      touchPoint.y - self.position.y);
@@ -1317,7 +966,7 @@ typedef struct lhV3F_Line
     info.delta = CGPointMake([event deltaX], [event deltaY]);
     
     [LHObserverPair performObserverPair:touchMovedObserver object:info];
-    [LHObserverPair performObserverPair:tagTouchMovedObserver object:info]; 
+    [LHObserverPair performObserverPair:tagTouchMovedObserver object:info];
     
     return swallowTouches;//avoid propagation
 }
@@ -1326,7 +975,7 @@ typedef struct lhV3F_Line
     
     if(!mouseDownStarted)
         return NO;
-
+    
     CGPoint touchPoint = [(CCDirectorMac*)[CCDirector sharedDirector] convertEventToGL:event];
     
     mouseDownStarted = false;
@@ -1340,7 +989,7 @@ typedef struct lhV3F_Line
     info.delta = CGPointMake([event deltaX], [event deltaY]);
     
     [LHObserverPair performObserverPair:touchEndedObserver object:info];
-    [LHObserverPair performObserverPair:tagTouchEndedObserver object:info]; 
+    [LHObserverPair performObserverPair:tagTouchEndedObserver object:info];
     
     return swallowTouches;//avoid propagation
 }
@@ -1362,7 +1011,7 @@ typedef struct lhV3F_Line
         info.delta = CGPointZero;
         
         [LHObserverPair performObserverPair:rightMouseDownObserver object:info];
-        [LHObserverPair performObserverPair:tagRightMouseDownObserver object:info]; 
+        [LHObserverPair performObserverPair:tagRightMouseDownObserver object:info];
         
         return swallowTouches;
     }
@@ -1373,7 +1022,7 @@ typedef struct lhV3F_Line
     
     if(!r_mouseDownStarted)
         return NO;
-
+    
     CGPoint touchPoint = [(CCDirectorMac*)[CCDirector sharedDirector] convertEventToGL:event];
     
     LHTouchInfo* info = [LHTouchInfo touchInfo];
@@ -1386,7 +1035,7 @@ typedef struct lhV3F_Line
     info.delta = CGPointMake([event deltaX], [event deltaY]);
     
     [LHObserverPair performObserverPair:rightMouseDraggedObserver object:info];
-    [LHObserverPair performObserverPair:tagRightMouseDraggedObserver object:info]; 
+    [LHObserverPair performObserverPair:tagRightMouseDraggedObserver object:info];
     
     return swallowTouches;//avoid propagation
 }
@@ -1408,7 +1057,7 @@ typedef struct lhV3F_Line
     info.delta = CGPointMake([event deltaX], [event deltaY]);
     
     [LHObserverPair performObserverPair:rightMouseUpObserver object:info];
-    [LHObserverPair performObserverPair:tagRightMouseUpObserver object:info]; 
+    [LHObserverPair performObserverPair:tagRightMouseUpObserver object:info];
     
     return swallowTouches;//avoid propagation
 }

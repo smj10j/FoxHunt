@@ -9,6 +9,7 @@
 
 #ifdef LH_USE_BOX2D
 #import "LHSprite.h"
+#import "LHJoint.h"
 #import "LevelHelperLoader.h"
 
 // Include STL vector class.
@@ -804,191 +805,6 @@ triangulateAllFixtures:NO
         [oldSprite removeFromParentAndCleanup:YES];
     }
 }
-//------------------------------------------------------------------------------
-//int sortBasedOnX(const b2Vec2& a, const b2Vec2& b)
-//{
-//    if (a.x>b.x) {
-//        return 1;
-//    }
-//    else if (a.x<b.x) {
-//        return -1;
-//    }
-//    return 0;
-//}    
-////------------------------------------------------------------------------------
-//-(std::vector<b2Vec2>) clockwise:(std::vector<b2Vec2>&)vec
-//{
-//    int n =vec.size();
-//    int i1 =1,i2 =n-1;
-//    
-//    std::vector<b2Vec2> tempVec = vec;
-//    b2Vec2 C;
-//    b2Vec2 D;
-//    
-//    std::sort(vec.begin(), vec.end(), sortBasedOnX);
-//    
-//    tempVec[0]=vec[0];
-//    C=vec[0];
-//    D=vec[n-1];
-//    
-//    for(int i = 1; i < n-1; ++i){
-//    
-//        if(isLeft(C, D, vec[i]))
-//        {
-//            tempVec[i1++]=vec[i];
-//        }
-//        else {
-//            tempVec[i2--]=vec[i];
-//        }
-//    }
-//
-//    tempVec[i1]=vec[n-1];
-//    return tempVec;
-//}
-//-(bool) testCentroid:(b2Vec2*)vs
-//                size:(int)count
-//{
-//    if(count < 3)
-//        return false;
-//    
-//	b2Vec2 c; c.Set(0.0f, 0.0f);
-//	float32 area = 0.0f;
-//    
-//	// pRef is the reference point for forming triangles.
-//	// It's location doesn't change the result (except for rounding error).
-//	b2Vec2 pRef(0.0f, 0.0f);
-//#if 0
-//	// This code would put the reference point inside the polygon.
-//	for (int32 i = 0; i < count; ++i)
-//	{
-//		pRef += vs[i];
-//	}
-//	pRef *= 1.0f / count;
-//#endif
-//    
-//	const float32 inv3 = 1.0f / 3.0f;
-//    
-//	for (int32 i = 0; i < count; ++i)
-//	{
-//		// Triangle vertices.
-//		b2Vec2 p1 = pRef;
-//		b2Vec2 p2 = vs[i];
-//		b2Vec2 p3 = i + 1 < count ? vs[i+1] : vs[0];
-//        
-//		b2Vec2 e1 = p2 - p1;
-//		b2Vec2 e2 = p3 - p1;
-//        
-//		float32 D = b2Cross(e1, e2);
-//        
-//		float32 triangleArea = 0.5f * D;
-//		area += triangleArea;
-//        
-//		// Area weighted centroid
-//		c += triangleArea * inv3 * (p1 + p2 + p3);
-//	}
-//    
-//	// Centroid
-//    if(area < b2_epsilon)
-//        return false;
-//    
-//    return true;
-//}
-//------------------------------------------------------------------------------
-//-(bool) canCreateFixtureWithThisVertices:(b2Vec2*)vertices
-//                                    size:(int32)count
-//{
-//    if(count < 3 || count > b2_maxPolygonVertices)
-//        return false;
-//    
-//	int32 n = b2Min(count, b2_maxPolygonVertices);
-//    
-//	// Copy vertices into local buffer
-//	b2Vec2 ps[b2_maxPolygonVertices];
-//	for (int32 i = 0; i < n; ++i)
-//	{
-//		ps[i] = vertices[i];
-//	}
-//    
-//	// Create the convex hull using the Gift wrapping algorithm
-//	// http://en.wikipedia.org/wiki/Gift_wrapping_algorithm
-//    
-//	// Find the right most point on the hull
-//	int32 i0 = 0;
-//	float32 x0 = ps[0].x;
-//	for (int32 i = 1; i < count; ++i)
-//	{
-//		float32 x = ps[i].x;
-//		if (x > x0 || (x == x0 && ps[i].y < ps[i0].y))
-//		{
-//			i0 = i;
-//			x0 = x;
-//		}
-//	}
-//    
-//	int32 hull[b2_maxPolygonVertices];
-//	int32 m = 0;
-//	int32 ih = i0;
-//    
-//	for (;;)
-//	{
-//		hull[m] = ih;
-//        
-//		int32 ie = 0;
-//		for (int32 j = 1; j < n; ++j)
-//		{
-//			if (ie == ih)
-//			{
-//				ie = j;
-//				continue;
-//			}
-//            
-//			b2Vec2 r = ps[ie] - ps[hull[m]];
-//			b2Vec2 v = ps[j] - ps[hull[m]];
-//			float32 c = b2Cross(r, v);
-//			if (c < 0.0f)
-//			{
-//				ie = j;
-//			}
-//            
-//			// Collinearity check
-//			if (c == 0.0f && v.LengthSquared() > r.LengthSquared())
-//			{
-//				ie = j;
-//			}
-//		}
-//        
-//		++m;
-//		ih = ie;
-//        
-//		if (ie == i0){
-//			break;
-//		}
-//	}
-//	
-//	//int m_count = m;
-//    b2Vec2 m_vertices[b2_maxPolygonVertices];
-//	b2Vec2 m_normals[b2_maxPolygonVertices];
-//    
-//	// Copy vertices.
-//	for (int32 i = 0; i < m; ++i){
-//		m_vertices[i] = ps[hull[i]];
-//	}
-//    
-//	// Compute normals. Ensure the edges have non-zero length.
-//	for (int32 i = 0; i < m; ++i){
-//		int32 i1 = i;
-//		int32 i2 = i + 1 < m ? i + 1 : 0;
-//		b2Vec2 edge = m_vertices[i2] - m_vertices[i1];
-//        if(edge.LengthSquared() <= b2_epsilon * b2_epsilon)
-//            return false;
-//		//b2Assert(edge.LengthSquared() > b2_epsilon * b2_epsilon);
-//		m_normals[i] = b2Cross(edge, 1.0f);
-//		m_normals[i].Normalize();
-//	}
-//    
-//	// Compute the polygon centroid.
-//	return [self testCentroid:m_vertices size:m];
-//}
 //------------------------------------------------------------------------------
 
 #define calculate_determinant_2x2(x1,y1,x2,y2) x1*y2-y1*x2
@@ -1787,38 +1603,6 @@ triangulateAllFixtures:NO
     }
 }
 
-//-(NSArray*)cutSprite:(LHSprite*)oldSprite
-//           fromPoint:(CGPoint)point
-//            inRadius:(float)radius
-//                cuts:(int)numberOfCuts
-//{
-//    if(numberOfCuts %2 != 0)
-//    {
-//        NSLog(@"numberOfCuts must be EVEN");
-//        return nil;
-//    }
-//    
-//    [self createExplosionWithCuts:numberOfCuts
-//                           radius:radius
-//                          atPoint:point];
-//    
-//    NSMutableSet* spritesSet = [[[NSMutableSet alloc] init] autorelease];
-//    for(int i = 0; i< explosionLines.size(); i +=2)
-//    {
-//        CGPoint lineA = explosionLines[i];
-//        CGPoint lineB = explosionLines[i+1];
-//        
-//        NSArray* createdSprites =  [self cutSprite:oldSprite
-//                                         withLineA:lineA
-//                                             lineB:lineB];
-//        
-//        [spritesSet addObjectsFromArray:createdSprites];
-//    }
-//    
-//    return [spritesSet allObjects];    
-//}
-//
-
 -(void) explodeSpritesInRadius:(float)radius
                      withForce:(float)maxForce
                       position:(CGPoint)pos
@@ -1836,6 +1620,32 @@ triangulateAllFixtures:NO
 }
 
 //------------------------------------------------------------------------------
+-(bool)cutRopeJoint:(LHJoint*)joint
+ withLineFromPointA:(CGPoint)ptA
+           toPointB:(CGPoint)ptB{
+    
+    if(joint == nil)return false;
+    if([joint type] != LH_ROPE_JOINT)return false;
+    
+    return [joint cutRopeJointsIntesectingWithLineFromPointA:ptA
+                                                    toPointB:ptB];
+}
+
+-(void)cutRopeJoints:(NSArray*)jointsArray
+  withLineFromPointA:(CGPoint)ptA
+            toPointB:(CGPoint)ptB{
+
+    for(LHJoint* joint in jointsArray){
+        if(joint == nil)return;
+        if([joint type] != LH_ROPE_JOINT)return;
+    
+        [joint cutRopeJointsIntesectingWithLineFromPointA:ptA
+                                                 toPointB:ptB];
+    }
+}
+
+
+
 -(void)debugDrawing{
     
     for(size_t i = 0; i < explosionLines.size(); i+=2)

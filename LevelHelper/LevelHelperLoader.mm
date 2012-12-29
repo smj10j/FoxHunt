@@ -787,7 +787,7 @@ CGSize  LHSizeFromString(NSString* val){
 //------------------------------------------------------------------------------
 -(void) dealloc{  
     
-   NSLog(@"LH DEALLOC %p", self);
+//   NSLog(@"LH DEALLOC %p", self);
 
 #ifdef LH_USE_BOX2D
     [[LHCuttingEngineMgr sharedInstance] destroyAllPrevioslyCutSprites];
@@ -798,7 +798,7 @@ CGSize  LHSizeFromString(NSString* val){
     {
         LHParallaxNode* node = [parallaxesInLevel objectForKey:key];
         
-        NSLog(@"SHOULD REMOVE PARALLAX %@", [node uniqueName]);
+//        NSLog(@"SHOULD REMOVE PARALLAX %@", [node uniqueName]);
         
         [node removeFromParentAndCleanup:YES];
         node = nil;

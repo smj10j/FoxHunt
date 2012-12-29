@@ -34,6 +34,8 @@ enum GAME_STATE {
 	LHParallaxNode* _parallaxNode;
 	double _targetParallaxSpeed;
 	double _normalParallaxSpeed;
+	
+	int _numObstaclesOnScreen;
 
 	GAME_STATE _state;
 	

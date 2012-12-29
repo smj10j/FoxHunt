@@ -30,10 +30,160 @@
 #import "LevelHelperLoader.h"
 #import "LHSprite.h"
 #import "LHDictionaryExt.h"
+
+
+
+@interface LHRopePoint : NSObject {
+    CGPoint position;
+    CGPoint oldPosition;
+}
+
++(id)ropePoint;
+-(void)setPosition:(CGPoint)pos;
+-(CGPoint)position;
+
+-(void)update;
+-(void)applyGravity:(float)dt;
+
+@end
+
+@implementation LHRopePoint
+
++(id)ropePoint{    
+#ifndef LH_ARC_ENABLED
+    return [[[self alloc] init] autorelease];
+#else
+    return [[self alloc] init];
+#endif
+}
+
+-(void)setPosition:(CGPoint)pos{
+    oldPosition = pos;
+    position = oldPosition;
+}
+-(CGPoint)position{
+    return position;
+}
+-(void)update {
+    CGPoint tempPos = position;
+    position.x += position.x - oldPosition.x;
+    position.y += position.y - oldPosition.y;
+    oldPosition = tempPos;
+}
+-(void)applyGravity:(float)dt {
+    
+    b2World* world = [[LHSettings sharedInstance] activeBox2dWorld];
+    
+    if(world){
+        b2Vec2 grav = world->GetGravity();
+        
+        position.x += grav.x*2.0f*dt;
+        position.y += grav.y*2.0f*dt;
+    }
+    else{
+        position.y -= 10.0f*dt; //gravity magic number
+    }
+}
+
+-(void)dealloc{
+#ifndef LH_ARC_ENABLED
+    [super dealloc];
+#endif
+}
+@end
+
+
+
+
+
+@interface LHRopeStick : NSObject {
+	LHRopePoint *pointA;
+	LHRopePoint *pointB;
+	float hypotenuse;
+}
+-(id)initWithRopePointA:(LHRopePoint*)a ropePointB:(LHRopePoint*)b;
++(id)ropeStickWithRopePointA:(LHRopePoint*)a ropePointB:(LHRopePoint*)b;
+
+-(void)contract;
+-(LHRopePoint*)ropePointA;
+-(LHRopePoint*)ropePointB;
+-(void)setRopePointA:(LHRopePoint*)a;
+-(void)setRopePointB:(LHRopePoint*)b;
+
+@end
+@implementation LHRopeStick
+-(id)initWithRopePointA:(LHRopePoint*)a ropePointB:(LHRopePoint*)b{
+	
+    if((self = [super init])) {
+		pointA = a;
+		pointB = b;
+		hypotenuse = ccpDistance([pointA position],[pointB position]);
+	}
+	return self;
+}
+
++(id)ropeStickWithRopePointA:(LHRopePoint*)a ropePointB:(LHRopePoint*)b
+{
+#ifndef LH_ARC_ENABLED
+    return [[[self alloc] initWithRopePointA:a ropePointB:b] autorelease];
+#else
+    return [[self alloc] initWithRopePointA:a ropePointB:b];
+#endif
+}
+
+-(void)dealloc{
+    pointA = nil;
+    pointB = nil;
+    #ifndef LH_ARC_ENABLED
+    [super dealloc];
+    #endif
+}
+
+-(void)contract {
+    CGPoint posA = [pointA position];
+    CGPoint posB = [pointB position];
+    
+	float dx = posB.x - posA.x;
+	float dy = posB.y - posA.y;
+	float h = ccpDistance(posA,posB);
+	float diff = hypotenuse - h;
+	float offx = (diff * dx / h) * 0.5;
+	float offy = (diff * dy / h) * 0.5;
+
+    [pointA setPosition:ccp(posA.x - offx, posA.y - offy)];
+    [pointB setPosition:ccp(posB.x + offx, posB.y + offy)];
+}
+-(LHRopePoint*)ropePointA {
+	return pointA;
+}
+-(LHRopePoint*)ropePointB {
+	return pointB;
+}
+
+-(void)setRopePointA:(LHRopePoint*)a{
+    pointA = a;
+}
+
+-(void)setRopePointB:(LHRopePoint*)b{
+    pointB = b;
+}
+
+@end
+
+
+
+
+
+
+
+
+
+
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 @interface LevelHelperLoader (LH_JOINT_PRIVATE)
 -(void)removeJoint:(LHJoint*)jt;
+-(void)addJoint:(LHJoint*)jt;
 @end
 
 @implementation LevelHelperLoader (LH_JOINT_PRIVATE)
@@ -42,15 +192,19 @@
     if(!jt)return;
     [jointsInLevel removeObjectForKey:[jt uniqueName]];
 }
+-(void)addJoint:(LHJoint*)jt{
+    if(jt){
+        [jointsInLevel setObject:jt forKey:[jt uniqueName]];
+    }
+}
 @end
 
 @interface LHJoint (Private)
 -(void) createBox2dJointFromDictionary:(NSDictionary*)dictionary;
 @end
-#
+
 ////////////////////////////////////////////////////////////////////////////////
 @implementation LHJoint
-@synthesize tag;
 @synthesize type;
 @synthesize uniqueName;
 @synthesize shouldDestroyJointOnDealloc;
@@ -60,10 +214,23 @@
     if(shouldDestroyJointOnDealloc)
         [self removeJointFromWorld];
 
+    [self unscheduleAllSelectors];
+
+    [rope_spriteSheet removeFromParentAndCleanup:YES];
+
 #ifndef LH_ARC_ENABLED
+    [rope_points release];
+	[rope_sprites release];
+	[rope_sticks release];
+    [rope_textureName release];
     [uniqueName release];
 	[super dealloc];
 #endif
+    rope_textureName = nil;
+    uniqueName = nil;
+    rope_points = nil;
+	rope_sprites= nil;
+	rope_sticks= nil;
 }
 ////////////////////////////////////////////////////////////////////////////////
 -(id) initWithDictionary:(NSDictionary*)dictionary 
@@ -73,6 +240,7 @@
     self = [super init];
     if (self != nil)
     {
+        rope_wasCut = false;
         joint = 0;
         shouldDestroyJointOnDealloc = true;
         uniqueName = [[NSString alloc] initWithString:[dictionary stringForKey:@"UniqueName"]];
@@ -85,6 +253,7 @@
     }
     return self;
 }
+
 ////////////////////////////////////////////////////////////////////////////////
 +(id) jointWithDictionary:(NSDictionary*)dictionary 
                     world:(b2World*)box2d 
@@ -99,6 +268,49 @@
 #endif
 
 }
+
+
+
+-(id) initRopeJointWithDictionary:(NSDictionary*)dictionary
+                            joint:(b2RopeJoint*)ropeJt
+                           loader:(LevelHelperLoader*)pLoader{
+    
+    self = [super init];
+    if (self != nil)
+    {
+        rope_wasCut = true;
+        joint = ropeJt;
+        shouldDestroyJointOnDealloc = true;
+        uniqueName = [[NSString alloc] initWithString:[dictionary stringForKey:@"UniqueName"]];
+        tag = 0;
+        type = LH_ROPE_JOINT;
+        boxWorld = ropeJt->GetBodyA()->GetWorld();
+        parentLoader = pLoader;
+        [self prepareRopeJointsWithDictionary:dictionary];
+        
+#ifndef LH_ARC_ENABLED
+        joint->SetUserData(self);
+#else
+        joint->SetUserData((__bridge void*)self);
+#endif
+    }
+    return self;
+}
+
++(id) ropeJointWithDictionary:(NSDictionary*)dictionary
+                        joint:(b2RopeJoint*)ropeJt
+                       loader:(LevelHelperLoader*)pLoader{
+    
+    if(!pLoader) return nil;
+    
+#ifndef LH_ARC_ENABLED
+    return [[[self alloc] initRopeJointWithDictionary:dictionary joint:ropeJt loader:pLoader] autorelease];
+#else
+    return [[self alloc]  initRopeJointWithDictionary:dictionary joint:ropeJt loader:pLoader];
+#endif
+
+}
+
 
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
@@ -288,11 +500,6 @@
 				CGPoint grAnchorA = [dictionary pointForKey:@"GroundAnchorRelativeA"];
 				CGPoint grAnchorB = [dictionary pointForKey:@"GroundAnchorRelativeB"];
 				
-//				CGSize winSize = [[CCDirector sharedDirector] winSizeInPixels];
-				
-//				grAnchorA.y = winSize.height - convertY*grAnchorA.y;
-//				grAnchorB.y = winSize.height - convertY*grAnchorB.y;
-				
                 b2Vec2 bodyAPos = bodyA->GetPosition();
                 b2Vec2 bodyBPos = bodyB->GetPosition();
                 
@@ -388,20 +595,32 @@
 			}
 				break;
 				
-			case LH_ROPE_JOINT: //NOT WORKING YET AS THE BOX2D JOINT FOR THIS TYPE IS A TEST JOINT
+			case LH_ROPE_JOINT:
 			{
 #ifdef B2_ROPE_JOINT_H
 				b2RopeJointDef jointDef;
 				
-				jointDef.localAnchorA = bodyA->GetPosition();
-				jointDef.localAnchorB = bodyB->GetPosition();
+                jointDef.localAnchorA = b2Vec2(bodyA->GetLocalCenter().x + (anchorA.x*scaleA.width/ptm),
+                                            bodyA->GetLocalCenter().y - (anchorA.y*scaleA.height/ptm));
+
+                jointDef.localAnchorB = b2Vec2(bodyB->GetLocalCenter().x + (anchorB.x*scaleB.width/ptm),
+                                            bodyB->GetLocalCenter().y - (anchorB.y*scaleB.height/ptm));
+
 				jointDef.bodyA = bodyA;
 				jointDef.bodyB = bodyB;
-				jointDef.maxLength = [dictionary floatForKey:@"MaxLength"];
-				jointDef.collideConnected = collideConnected; 
+				float length = [dictionary floatForKey:@"MaxLength"];
+                
+                if(length <= 0)
+                    length = 0.01;
+                
+                jointDef.maxLength = (bodyA->GetWorldPoint(posA) - bodyB->GetWorldPoint(posB)).Length() * length;
+
+				jointDef.collideConnected = collideConnected;
 				
 				if(0 != boxWorld){
 					joint = (b2RopeJoint*)boxWorld->CreateJoint(&jointDef);
+
+                    [self prepareRopeJointsWithDictionary:dictionary];
 				}
 #endif
 			}
@@ -437,6 +656,362 @@
 #else
     joint->SetUserData((__bridge void*)self);
 #endif
+}
+
+
+-(void)prepareRopeJointsWithDictionary:(NSDictionary*)dictionary
+{
+    rope_showRepresentation = false;
+    rope_textureName = @"";
+    rope_z = 0;
+    
+    if([dictionary boolForKey:@"ShowRepresentation"])
+    {
+        rope_showRepresentation = true;
+        if([dictionary objectForKey:@"TextureName"])
+        {
+            NSString* texture = [dictionary objectForKey:@"TextureName"];
+            texture = [texture lastPathComponent];
+            
+            rope_textureName = [[NSString alloc] initWithString:texture];
+            
+            if([dictionary objectForKey:@"SegmentsFactor"]){
+                rope_segmentFactor = [dictionary intForKey:@"SegmentsFactor"];
+            }
+            else{
+                rope_segmentFactor = 12;
+            }
+            
+            rope_spriteSheet = [CCSpriteBatchNode batchNodeWithFile:texture];
+            
+            if(rope_spriteSheet){
+                LHLayer* layer  = [parentLoader layerWithUniqueName:@"MAIN_LAYER"];
+                if(layer){
+                    if([dictionary objectForKey:@"RepresentationZ"]){
+                        rope_z = [dictionary intForKey:@"RepresentationZ"];
+                        
+                    }
+                    [layer addChild:rope_spriteSheet z:rope_z];
+                    
+                    rope_points = [[NSMutableArray alloc] init];
+                    rope_sticks = [[NSMutableArray alloc] init];
+                    rope_sprites = [[NSMutableArray alloc] init];
+                    
+                    [self createRopeJointRepresentation];
+                    [self scheduleUpdate];
+                    
+                    [layer addChild:self];
+                }
+            }
+        }
+        else{
+            NSLog(@"Rope texture \"%@\" does not have a texture but wants visual representation", uniqueName);
+        }
+    }
+}
+
+
+-(void)updateRopePointsWithA:(CGPoint)pointA
+                           B:(CGPoint)pointB
+                          dt:(float)dt
+{
+
+    if([rope_points count] > 0){
+        [(LHRopePoint*)[rope_points objectAtIndex:0] setPosition:pointA];
+        [(LHRopePoint*)[rope_points objectAtIndex:rope_numPoints-1] setPosition:pointB];
+	
+        for(int i=1; i<rope_numPoints-1; ++i) {
+            [(LHRopePoint*)[rope_points objectAtIndex:i] applyGravity:dt];
+            [(LHRopePoint*)[rope_points objectAtIndex:i] update];
+        }
+	
+        for(int j=0; j<4; ++j) {
+            for(int i=0;i<rope_numPoints-1;++i) {
+                [(LHRopeStick*)[rope_sticks objectAtIndex:i] contract];
+            }
+        }
+    }
+}
+
+-(void)updateRopeSprites
+{
+	if(rope_spriteSheet)
+    {
+		for(int i=0;i<rope_numPoints-1;++i)
+        {
+			LHRopePoint *pointA = [[rope_sticks objectAtIndex:i] ropePointA];
+            LHRopePoint *pointB = [[rope_sticks objectAtIndex:i] ropePointB];
+            
+			float stickAngle = ccpToAngle(ccpSub([pointA position],
+                                                 [pointB position]));
+			CCSprite *tmpSprite = [rope_sprites objectAtIndex:i];
+			[tmpSprite setPosition:ccpMidpoint([pointA position],
+                                               [pointB position])];
+			[tmpSprite setRotation: -CC_RADIANS_TO_DEGREES(stickAngle)];
+		}
+	}
+}
+
+-(void)update:(ccTime)dt{
+    
+    if(LH_ROPE_JOINT == [LHJoint typeFromBox2dJoint:joint])
+    {
+        CGPoint pointA = [LevelHelperLoader metersToPoints:joint->GetAnchorA()];
+        CGPoint pointB = [LevelHelperLoader metersToPoints:joint->GetAnchorB()];
+        [self updateRopePointsWithA:pointA
+                                  B:pointB
+                                 dt:dt];
+        [self updateRopeSprites];
+    }
+}
+
+-(void)createRopeJointRepresentation
+{
+    float ptm = [[LHSettings sharedInstance] lhPtmRatio];
+    
+    CGPoint pointA  = [LevelHelperLoader metersToPoints:joint->GetAnchorA()];
+    CGPoint pointB  = [LevelHelperLoader metersToPoints:joint->GetAnchorB()];
+    float length    = ((b2RopeJoint*)joint)->GetMaxLength()*ptm;
+
+    [rope_points removeAllObjects];
+    [rope_sticks removeAllObjects];
+    for(CCSprite* spr in rope_sprites){
+        [spr removeFromParentAndCleanup:YES];
+    }
+    [rope_sprites removeAllObjects];
+    
+    rope_numPoints = length/rope_segmentFactor;
+    
+	CGPoint diffVector = ccpSub(pointB,pointA);
+	float multiplier = length / (rope_numPoints-1);
+    
+	antiSagHack = 0.1f; //HACK: scale down rope points to cheat sag. set to 0 to disable, max suggested value 0.1
+	
+    for(int i=0; i<rope_numPoints; ++i)
+    {
+		CGPoint tmpPos = ccpAdd(pointA, ccpMult(ccpNormalize(diffVector),multiplier*i*(1-antiSagHack)));
+        LHRopePoint* rpPoint = [LHRopePoint ropePoint];
+        [rpPoint setPosition:tmpPos];
+		[rope_points addObject:rpPoint];
+	}
+	for(int i=0; i<rope_numPoints-1; ++i)
+    {
+        LHRopeStick* stick = [LHRopeStick ropeStickWithRopePointA:[rope_points objectAtIndex:i]
+                                                       ropePointB:[rope_points objectAtIndex:i+1]];
+        
+        [rope_sticks addObject:stick];
+	}
+	
+    if(rope_spriteSheet)
+    {
+		for(int i=0; i<rope_numPoints-1; ++i)
+        {
+			LHRopePoint *pointA = [[rope_sticks objectAtIndex:i] ropePointA];
+            LHRopePoint *pointB = [[rope_sticks objectAtIndex:i] ropePointB];
+			
+			CGPoint stickVector = ccpSub([pointA position],[pointB position]);
+			float stickAngle = ccpToAngle(stickVector);
+			CCSprite *tmpSprite = [CCSprite spriteWithTexture:rope_spriteSheet.texture
+                                                         rect:CGRectMake(0,0,
+                                                                         multiplier,
+                                                                         [[[rope_spriteSheet textureAtlas] texture] pixelsHigh]/CC_CONTENT_SCALE_FACTOR())];
+			ccTexParams params = {GL_LINEAR,GL_LINEAR,GL_REPEAT,GL_REPEAT};
+			[tmpSprite.texture setTexParameters:&params];
+			[tmpSprite setPosition:ccpMidpoint([pointA position],[pointB position])];
+			[tmpSprite setRotation:-1 * CC_RADIANS_TO_DEGREES(stickAngle)];
+			[rope_spriteSheet addChild:tmpSprite];
+            [rope_sprites addObject:tmpSprite];
+		}
+	}
+}
+
+
+
+- (BOOL)checkLineIntersection:(CGPoint)p1 :(CGPoint)p2 :(CGPoint)p3 :(CGPoint)p4
+{
+    // http://local.wasp.uwa.edu.au/~pbourke/geometry/lineline2d/
+    CGFloat denominator = (p4.y - p3.y) * (p2.x - p1.x) - (p4.x - p3.x) * (p2.y - p1.y);
+    
+    // In this case the lines are parallel so we assume they don't intersect
+    if (denominator == 0.0f)
+        return NO;
+    CGFloat ua = ((p4.x - p3.x) * (p1.y - p3.y) - (p4.y - p3.y) * (p1.x - p3.x)) / denominator;
+    CGFloat ub = ((p2.x - p1.x) * (p1.y - p3.y) - (p2.y - p1.y) * (p1.x - p3.x)) / denominator;
+    
+    if (ua >= 0.0 && ua <= 1.0 && ub >= 0.0 && ub <= 1.0)
+    {
+        return YES;
+    }
+    
+    return NO;
+}
+
+
+
+-(b2Body *) createTipBody{
+    b2BodyDef bodyDef;
+    bodyDef.type = b2_dynamicBody;
+    bodyDef.linearDamping = 0.5f;
+    b2World* world = joint->GetBodyA()->GetWorld();
+    if(world){
+        b2Body *body = world->CreateBody(&bodyDef);
+        b2FixtureDef circleDef;
+        b2CircleShape circle;
+
+        float ptm = [[LHSettings sharedInstance] lhPtmRatio];
+        circle.m_radius =  1.0/ptm;
+        circleDef.shape = &circle;
+        circleDef.density = 10.0f;
+         
+        // Since these tips don't have to collide with anything
+        // set the mask bits to zero
+//        circleDef.filter.maskBits = 0;
+        body->CreateFixture(&circleDef);
+         
+        return body;
+    }
+    return NULL;
+}
+
+-(void)resetRopeJoint {
+	CGPoint pointA = [LevelHelperLoader metersToPoints:joint->GetAnchorA()];
+	CGPoint pointB = [LevelHelperLoader metersToPoints:joint->GetAnchorB()];
+	[self resetWithPoints:pointA pointB:pointB];
+}
+
+-(bool)ropeWasCut{
+    return rope_wasCut;
+}
+
+-(void)resetWithPoints:(CGPoint)pointA pointB:(CGPoint)pointB {
+	float distance = ccpDistance(pointA,pointB);
+	CGPoint diffVector = ccpSub(pointB,pointA);
+	float multiplier = distance / (rope_numPoints - 1);
+	for(int i=0;i<rope_numPoints;++i) {
+		CGPoint tmpVector = ccpAdd(pointA, ccpMult(ccpNormalize(diffVector),multiplier*i*(1-antiSagHack)));
+		LHRopePoint *tmpPoint = [rope_points objectAtIndex:i];
+        [tmpPoint setPosition:tmpVector];
+	}
+}
+
+
+-(bool)cutRopeAtStick:(LHRopeStick *)stick
+                  newBodyA:(b2Body*)newBodyA
+                  newBodyB:(b2Body*)newBodyB
+{    
+    // Find out where the rope will be cut
+    int nPoint = [rope_sticks indexOfObject:stick];
+    
+    // Position the new dummy bodies
+    LHRopePoint *pointOfBreak = [rope_points objectAtIndex:nPoint];
+    b2Vec2 newBodiesPosition = [LevelHelperLoader pointsToMeters:[pointOfBreak position]];
+    newBodyA->SetTransform(newBodiesPosition, 0.0);
+    newBodyB->SetTransform(newBodiesPosition, 0.0);
+
+    // Get a reference to the world to create the new joint
+    b2World *world = joint->GetBodyA()->GetWorld();
+    
+    // This will determine how long the rope is now and how long the new rope will be
+    float32 cutRatio = (float32)nPoint / (rope_numPoints - 1);
+
+    // Re-create the joint
+    b2RopeJointDef jd;
+    jd.bodyA = joint->GetBodyA();
+    jd.bodyB = newBodyB;
+    jd.localAnchorA = ((b2RopeJoint*)joint)->GetLocalAnchorA();
+    jd.localAnchorB = b2Vec2(0, 0);
+    jd.maxLength = ((b2RopeJoint*)joint)->GetMaxLength() * cutRatio;
+    b2RopeJoint *newJoint1 = (b2RopeJoint *)world->CreateJoint(&jd); //create joint
+
+    
+    
+    // Create the new rope joint
+    jd.bodyA = newBodyA;
+    jd.bodyB = joint->GetBodyB();
+    jd.localAnchorA = b2Vec2(0, 0);
+    jd.localAnchorB = ((b2RopeJoint*)joint)->GetLocalAnchorB();
+    jd.maxLength = ((b2RopeJoint*)joint)->GetMaxLength() * (1 - cutRatio);
+    b2RopeJoint *newJoint2 = (b2RopeJoint *)world->CreateJoint(&jd); //create joint
+
+    
+    
+
+    // Destroy the old joint and update to the new one
+    world->DestroyJoint(joint);
+    joint = newJoint1;
+    
+    rope_wasCut = true;
+#ifndef LH_ARC_ENABLED
+    joint->SetUserData(self);
+#else
+    joint->SetUserData((__bridge void*)self);
+#endif
+
+    
+    
+    NSMutableDictionary* dictionary = [NSMutableDictionary dictionary];
+    [dictionary setObject:[NSNumber numberWithBool:rope_showRepresentation]
+                   forKey:@"ShowRepresentation"];
+    if(rope_textureName){
+        [dictionary setObject:rope_textureName
+                       forKey:@"TextureName"];
+    }
+    [dictionary setObject:[NSString stringWithFormat:@"%@1", uniqueName]
+                   forKey:@"UniqueName"];
+    
+    [dictionary setObject:[NSNumber numberWithInt:rope_segmentFactor]
+                   forKey:@"SegmentsFactor"];
+    
+    [dictionary setObject:[NSNumber numberWithInt:rope_z]
+                   forKey:@"RepresentationZ"];
+    
+    
+    LHJoint* newLhJoint = [LHJoint ropeJointWithDictionary:dictionary
+                                                     joint:newJoint2
+                                                    loader:parentLoader];
+    if(newLhJoint){
+        [newLhJoint setTag:tag];
+        [parentLoader addJoint:newLhJoint];
+    }
+
+    
+    
+    
+    [self createRopeJointRepresentation];
+    
+    
+    
+    return true;
+}
+
+
+
+
+
+-(bool)cutRopeJointsIntesectingWithLineFromPointA:(CGPoint)a
+                                         toPointB:(CGPoint)b{
+    
+    if([self type] != LH_ROPE_JOINT)return false;
+    
+    for(LHRopeStick* stick in rope_sticks)
+    {
+        CGPoint pa = [[stick ropePointA] position];
+        CGPoint pb = [[stick ropePointB] position];
+        
+        if([self checkLineIntersection:a :b :pa :pb])
+        {
+
+            b2Body *newBodyA = [self createTipBody];
+            b2Body *newBodyB = [self createTipBody];
+            
+            [self cutRopeAtStick:stick
+                        newBodyA:newBodyA
+                        newBodyB:newBodyB];
+            
+            return YES;
+        }
+    }
+    return NO;
 }
 
 

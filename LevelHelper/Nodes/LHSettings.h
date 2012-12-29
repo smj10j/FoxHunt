@@ -65,7 +65,7 @@
     NSMutableArray* allLHMainLayers;
     
     NSMutableString* activeFolder;
-    CGSize saveFrame;//used by the touch handler to conver touches
+    CGSize safeFrame;//used by the touch handler to convert touches
     CGPoint userOffset;
 }
 @property bool useHDOnIpad;

@@ -37,7 +37,7 @@
 							<key>ParentClass</key>
 							<string>LHBatch</string>
 							<key>ParentName</key>
-							<string>Tiles</string>
+							<string>Background</string>
 							<key>PathProperties</key>
 							<dict/>
 							<key>PhysicProperties</key>
@@ -48,11 +48,11 @@
 							<key>SHSceneName</key>
 							<string>Spritesheet.pshs</string>
 							<key>SHSheetName</key>
-							<string>Tiles</string>
+							<string>Background</string>
 							<key>SHSpriteName</key>
 							<string>bg</string>
 							<key>SheetImage</key>
-							<string>Spritesheet_Tiles.png</string>
+							<string>Spritesheet_Background.png</string>
 							<key>TextureProperties</key>
 							<dict>
 								<key>Angle</key>
@@ -112,7 +112,7 @@
 							<key>ParentClass</key>
 							<string>LHBatch</string>
 							<key>ParentName</key>
-							<string>Tiles</string>
+							<string>Background</string>
 							<key>PathProperties</key>
 							<dict/>
 							<key>PhysicProperties</key>
@@ -123,11 +123,11 @@
 							<key>SHSceneName</key>
 							<string>Spritesheet.pshs</string>
 							<key>SHSheetName</key>
-							<string>Tiles</string>
+							<string>Background</string>
 							<key>SHSpriteName</key>
 							<string>bg</string>
 							<key>SheetImage</key>
-							<string>Spritesheet_Tiles.png</string>
+							<string>Spritesheet_Background.png</string>
 							<key>TextureProperties</key>
 							<dict>
 								<key>Angle</key>
@@ -187,7 +187,7 @@
 							<key>ParentClass</key>
 							<string>LHBatch</string>
 							<key>ParentName</key>
-							<string>Tiles</string>
+							<string>Background</string>
 							<key>PathProperties</key>
 							<dict/>
 							<key>PhysicProperties</key>
@@ -198,11 +198,11 @@
 							<key>SHSceneName</key>
 							<string>Spritesheet.pshs</string>
 							<key>SHSheetName</key>
-							<string>Tiles</string>
+							<string>Background</string>
 							<key>SHSpriteName</key>
 							<string>bg</string>
 							<key>SheetImage</key>
-							<string>Spritesheet_Tiles.png</string>
+							<string>Spritesheet_Background.png</string>
 							<key>TextureProperties</key>
 							<dict>
 								<key>Angle</key>
@@ -262,7 +262,7 @@
 							<key>ParentClass</key>
 							<string>LHBatch</string>
 							<key>ParentName</key>
-							<string>Tiles</string>
+							<string>Background</string>
 							<key>PathProperties</key>
 							<dict/>
 							<key>PhysicProperties</key>
@@ -273,11 +273,11 @@
 							<key>SHSceneName</key>
 							<string>Spritesheet.pshs</string>
 							<key>SHSheetName</key>
-							<string>Tiles</string>
+							<string>Background</string>
 							<key>SHSpriteName</key>
 							<string>bg</string>
 							<key>SheetImage</key>
-							<string>Spritesheet_Tiles.png</string>
+							<string>Spritesheet_Background.png</string>
 							<key>TextureProperties</key>
 							<dict>
 								<key>Angle</key>
@@ -337,7 +337,7 @@
 							<key>ParentClass</key>
 							<string>LHBatch</string>
 							<key>ParentName</key>
-							<string>Tiles</string>
+							<string>Background</string>
 							<key>PathProperties</key>
 							<dict/>
 							<key>PhysicProperties</key>
@@ -348,11 +348,11 @@
 							<key>SHSceneName</key>
 							<string>Spritesheet.pshs</string>
 							<key>SHSheetName</key>
-							<string>Tiles</string>
+							<string>Background</string>
 							<key>SHSpriteName</key>
 							<string>bg</string>
 							<key>SheetImage</key>
-							<string>Spritesheet_Tiles.png</string>
+							<string>Spritesheet_Background.png</string>
 							<key>TextureProperties</key>
 							<dict>
 								<key>Angle</key>
@@ -412,7 +412,7 @@
 							<key>ParentClass</key>
 							<string>LHBatch</string>
 							<key>ParentName</key>
-							<string>Tiles</string>
+							<string>Background</string>
 							<key>PathProperties</key>
 							<dict/>
 							<key>PhysicProperties</key>
@@ -423,11 +423,11 @@
 							<key>SHSceneName</key>
 							<string>Spritesheet.pshs</string>
 							<key>SHSheetName</key>
-							<string>Tiles</string>
+							<string>Background</string>
 							<key>SHSpriteName</key>
 							<string>bg</string>
 							<key>SheetImage</key>
-							<string>Spritesheet_Tiles.png</string>
+							<string>Spritesheet_Background.png</string>
 							<key>TextureProperties</key>
 							<dict>
 								<key>Angle</key>
@@ -485,15 +485,15 @@
 					<key>SHScene</key>
 					<string>Spritesheet.pshs</string>
 					<key>SheetImage</key>
-					<string>Spritesheet_Tiles.png</string>
+					<string>Spritesheet_Background.png</string>
 					<key>SheetImageRelative</key>
-					<string>/FoxHunt/Resources/images/Spritesheet_Tiles.png</string>
+					<string>/FoxHunt/Resources/images/Spritesheet_Background.png</string>
 					<key>Tag</key>
 					<integer>0</integer>
 					<key>TagName</key>
 					<string>DEFAULT</string>
 					<key>UniqueName</key>
-					<string>Tiles</string>
+					<string>Background</string>
 					<key>ZOrder</key>
 					<integer>0</integer>
 				</dict>
@@ -536,15 +536,7 @@
 					<key>RatioY</key>
 					<real>0.0</real>
 					<key>SpriteName</key>
-					<string>bg</string>
-				</dict>
-				<dict>
-					<key>RatioX</key>
-					<real>1</real>
-					<key>RatioY</key>
-					<real>0.0</real>
-					<key>SpriteName</key>
-					<string>bg_1</string>
+					<string>bg_4</string>
 				</dict>
 				<dict>
 					<key>RatioX</key>
@@ -560,6 +552,14 @@
 					<key>RatioY</key>
 					<real>0.0</real>
 					<key>SpriteName</key>
+					<string>bg</string>
+				</dict>
+				<dict>
+					<key>RatioX</key>
+					<real>1</real>
+					<key>RatioY</key>
+					<real>0.0</real>
+					<key>SpriteName</key>
 					<string>bg_3</string>
 				</dict>
 				<dict>
@@ -568,7 +568,7 @@
 					<key>RatioY</key>
 					<real>0.0</real>
 					<key>SpriteName</key>
-					<string>bg_4</string>
+					<string>bg_1</string>
 				</dict>
 				<dict>
 					<key>RatioX</key>
@@ -617,8 +617,8 @@
 			<string>PLAYER</string>
 			<string>GROUND</string>
 			<string>PREY</string>
-			<string>LOG</string>
 			<string>COIN</string>
+			<string>OBSTACLE</string>
 		</array>
 		<key>ZoomValue</key>
 		<real>0.0</real>

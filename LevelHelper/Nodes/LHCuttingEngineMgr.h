@@ -12,6 +12,7 @@
 #include <vector>
 #import "cocos2d.h"
 @class LHSprite;
+@class LHJoint;
 
 @interface LHCuttingEngineMgr : CCNode{
     std::vector<CGPoint> explosionLines;
@@ -90,6 +91,16 @@
                      withForce:(float)maxForce
                       position:(CGPoint)pos
                        inWorld:(b2World*)world;
+
+
+-(bool)cutRopeJoint:(LHJoint*)joint
+ withLineFromPointA:(CGPoint)ptA
+           toPointB:(CGPoint)ptB; //returns true if it has cut the joint, false otherwise
+
+
+-(void)cutRopeJoints:(NSArray*)jointsArray
+  withLineFromPointA:(CGPoint)ptA
+            toPointB:(CGPoint)ptB;
 
 
 //use this only for debuging - performance is slow

@@ -46,6 +46,7 @@
     NSString* shSceneName;
     NSString* uniqueName;    
     NSString* sheetName;
+    NSString* sheetImage;
     float           delayPerUnit;
     NSMutableArray* frames;//array of LHAnimationFrameInfo;
     bool            loop;
@@ -71,6 +72,7 @@
 }
 @property (readonly) NSString* uniqueName;
 @property (readonly) NSString* sheetName;
+@property (readonly) NSString* sheetImage;
 @property (readonly) NSString* shSceneName;
 @property float delayPerUnit;
 @property bool  loop;

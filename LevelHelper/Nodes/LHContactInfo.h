@@ -98,5 +98,5 @@ enum LH_CONTACT_TYPE
 -(b2Contact*)contact;//available at both pre and post solve
 -(const b2Manifold*)oldManifold;//available at pre solve - else is nil
 -(const b2ContactImpulse*)impulse;//available at post solve - else is nil
-@end	
+@end
 #endif

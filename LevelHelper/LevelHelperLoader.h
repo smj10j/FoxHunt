@@ -65,8 +65,8 @@ enum LevelHelper_TAG
 	PLAYER 			= 1,
 	GROUND 			= 2,
 	PREY 			= 3,
-	LOG 			= 4,
-	COIN 			= 5,
+	COIN 			= 4,
+	OBSTACLE 			= 5,
 	NUMBER_OF_TAGS 	= 6
 };
 
@@ -368,6 +368,7 @@ NSValue* LHValueWithCGPoint(CGPoint pt);
 +(void)removeTouchDispatcherFromObject:(id)object;
 ////////////////////////////////////////////////////////////////////////////////
 @end
+
 
 
 

@@ -112,7 +112,6 @@
 
 -(void) update: (ccTime) dt {
 	
-	_lifetime+= dt;
 	_fixedTimestepAccumulator+= dt;
 	//DebugLog(@"dt = %f, _fixedTimestepAccumulator = %f", dt, _fixedTimestepAccumulator);
 	
@@ -144,6 +143,8 @@
 
 -(void) singleUpdateStep:(ccTime) dt {
 	
+	_lifetime+= dt;
+
 	//DebugLog(@"singleUpdateStep. _fixedTimestepAccumulator = %f", _fixedTimestepAccumulator);
 
 
@@ -174,6 +175,41 @@
 	[_player update:dt];
 	
 	[self updateParallaxSpeed];
+	
+	
+	
+	if((int)(_lifetime*10)%10 == 0 && arc4random_uniform(1000) < 200 && _numObstaclesOnScreen < 10) {
+	
+		CGSize winSize = [CCDirector sharedDirector].winSize;
+
+		LHSprite* catSprite = [_levelLoader createBatchSpriteWithName:@"object_sleepingcat" fromSheet:@"Obstacles" fromSHFile:@"Spritesheet" tag:OBSTACLE];
+		[_parallaxNode addSprite:catSprite parallaxRatio:ccp(1,0)];
+		[catSprite transformPosition:ccp(
+							arc4random_uniform(winSize.width/2) + winSize.width,
+							arc4random_uniform(winSize.height - 200*SCALING_FACTOR_V) + 150*SCALING_FACTOR_V)
+		];
+		
+		DebugLog(@"adding sprite at %f,%f", catSprite.position.x, catSprite.position.y);
+
+		_numObstaclesOnScreen++;
+	}
+	
+	
+	NSArray* obstacles = [_levelLoader spritesWithTag:OBSTACLE];
+	for(LHSprite* obstacle in obstacles) {
+		//DebugLog(@"Checking obstacle at %f,%f", obstacle.position.x, obstacle.position.y);
+		if(obstacle.position.x <= obstacle.boundingBox.size.width) {
+			[obstacle runAction:[CCSequence actions:
+						[CCFadeOut actionWithDuration:0.5f],
+						[CCCallBlock actionWithBlock:^{
+							[obstacle removeSelf];
+							_numObstaclesOnScreen--;
+							DebugLog(@"Removing offscreen obstacle");
+						}],
+						nil
+			]];
+		}
+	}
 }
 
 -(void)updateParallaxSpeed {
@@ -218,6 +254,10 @@
 		CGPoint location = [touch locationInView: [touch view]];
 		
 		location = [[CCDirector sharedDirector] convertToGL: location];
+	
+		if(location.x-_lastTouchStart.x == 0 && location.y-_lastTouchStart.y == 0) {
+			continue;
+		}
 
 		//swipe direction
 		CGPoint dashVector = ccpNormalize(ccpSub(location, _lastTouchStart));
@@ -227,7 +267,9 @@
 
 		if([_player isDashing]) {
 			//speed up/down parallax
-			_targetParallaxSpeed+= dashVector.x*[ConfigManager intForKey:CONFIG_PARALLAX_SPEED_ADJUSTMENT_FACTOR];
+			if(dashVector.x > 0) {
+				_targetParallaxSpeed+= dashVector.x*[ConfigManager intForKey:CONFIG_PARALLAX_SPEED_ADJUSTMENT_FACTOR];
+			}
 		}
 	}
 }

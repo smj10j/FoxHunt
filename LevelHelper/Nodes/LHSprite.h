@@ -50,8 +50,13 @@
 @class LHJoint;
 //------------------------------------------------------------------------------
 //------------------------------------------------------------------------------
+
 #ifdef __IPHONE_OS_VERSION_MAX_ALLOWED
+
+
+
 @interface LHSprite : CCSprite <CCStandardTouchDelegate, CCTargetedTouchDelegate>
+
 #elif defined(__MAC_OS_X_VERSION_MAX_ALLOWED)
 @interface LHSprite : CCSprite <CCMouseEventDelegate>
 #endif
@@ -82,6 +87,7 @@
     CGRect originalRect;
     CGPoint originalTextureOffset;
     
+    NSMutableArray* preloadedAnimations;
     __strong LHAnimationNode* animation;
     id animEndedObserver;//week ptr
     id animChangedFrameObserver;
@@ -147,6 +153,8 @@
 @property (readwrite) bool swallowTouches;
 @property (readwrite) bool touchesDisabled;
 @property (readwrite) int touchPriority;
+
+-(void)update:(ccTime)dt;//subclassers should call [super update:dt];
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 //CONSTRUCTORS USED BY LEVELHELPER
@@ -216,7 +224,11 @@
 ////////////////////////////////////////////////////////////////////////////////
 //ANIMATION METHODS
 //------------------------------------------------------------------------------
+//if you want the animation switching to be faster you need to preload an animation
+//using the "Preloaded Animations" property inside LH App
 -(void) prepareAnimationNamed:(NSString*)animName fromSHScene:(NSString*)shScene;
+-(void) playAnimation;
+
 
 //use this methods when you want to get notification about animation on a per sprite basis
 -(void) setAnimationHasEndedObserver:(id)observer selector:(SEL)selector;
@@ -234,8 +246,6 @@
 +(void) removeGlobalAnimationHasChangedFrameObserver:(id)observer;
 +(void) removeGlobalAnimationHasEndedAllRepetitionsObserver:(id)observer;
 
-
--(void) playAnimation;
 -(void) pauseAnimation;
 -(void) restartAnimation;
 -(void) stopAnimation; //removes the animation entirely

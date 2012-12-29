@@ -220,7 +220,7 @@
 	int scrTop = (int)(obj.initialPosition.y/winSize.height);
 	
 	if(screenNumberOnTheTop <= scrTop)
-		screenNumberOnTheTop = scrTop + 1;
+		screenNumberOnTheTop = scrTop;
 	
 	int scrBottom = (int)(obj.initialPosition.y/winSize.height);
     

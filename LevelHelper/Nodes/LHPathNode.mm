@@ -174,7 +174,10 @@
 	if(!pathPoints)return;
     
     bool killSelf = false;
-        
+    
+    if(currentPoint <0 || currentPoint >= [pathPoints count])
+        return;
+    
 	NSValue* ptVal = [pathPoints objectAtIndex:(NSUInteger)currentPoint];
 	CGPoint startPosition = LHPointFromValue(ptVal);
             

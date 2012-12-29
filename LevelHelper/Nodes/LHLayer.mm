@@ -78,6 +78,8 @@ static int untitledLayersCount = 0;
                 
         zOrder_ = [dictionary intForKey:@"ZOrder"];
         
+        [self setTag:[dictionary intForKey:@"Tag"]];
+        
         NSArray* childrenInfo = [dictionary objectForKey:@"Children"];
         for(NSDictionary* childDict in childrenInfo){
             [self addChildFromDictionary:childDict];

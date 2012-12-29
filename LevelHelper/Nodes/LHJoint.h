@@ -48,7 +48,7 @@ enum LH_JOINT_TYPE
     LH_UNKNOWN_TYPE
 };
 
-@interface LHJoint : NSObject
+@interface LHJoint : CCNode
 {
 	b2Joint* joint; //week ptr
     b2World* boxWorld;
@@ -60,8 +60,20 @@ enum LH_JOINT_TYPE
     __unsafe_unretained LevelHelperLoader* parentLoader;
     
     bool shouldDestroyJointOnDealloc;
+    
+    
+    bool rope_showRepresentation;
+    NSString* rope_textureName;
+    int rope_z;
+    bool rope_wasCut;
+    int rope_numPoints;
+	NSMutableArray *rope_points;
+	NSMutableArray *rope_sticks;
+	NSMutableArray *rope_sprites;
+	CCSpriteBatchNode* rope_spriteSheet;
+    int rope_segmentFactor;
+	float antiSagHack;    
 }
-@property int tag;
 @property (readonly) NSString* uniqueName;
 @property enum LH_JOINT_TYPE type;
 @property (readwrite) bool shouldDestroyJointOnDealloc;
@@ -69,6 +81,10 @@ enum LH_JOINT_TYPE
 +(id) jointWithDictionary:(NSDictionary*)dictionary 
                     world:(b2World*)box2d 
                    loader:(LevelHelperLoader*)pLoader;
+
++(id) ropeJointWithDictionary:(NSDictionary*)dictionary
+                        joint:(b2RopeJoint*)ropeJt
+                  loader:(LevelHelperLoader*)pLoader;
 
 ////////////////////////////////////////////////////////////////////////////////
 -(b2Joint*)joint;
@@ -93,5 +109,10 @@ enum LH_JOINT_TYPE
 //this method will return LH_UNKNOWN_TYPE if fail
 +(enum LH_JOINT_TYPE) typeFromBox2dJoint:(b2Joint*)joint;
 
+
+-(void)resetRopeJoint;
+-(bool)ropeWasCut;
+-(bool)cutRopeJointsIntesectingWithLineFromPointA:(CGPoint)a
+                                         toPointB:(CGPoint)b;
 @end	
 #endif

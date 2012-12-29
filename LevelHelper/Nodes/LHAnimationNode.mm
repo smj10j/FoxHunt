@@ -159,6 +159,7 @@
 @synthesize shSceneName;
 @synthesize uniqueName;
 @synthesize sheetName;
+@synthesize sheetImage;
 @synthesize delayPerUnit;
 @synthesize loop;
 @synthesize repetitions;
@@ -175,6 +176,7 @@
     [shSceneName release];
     [uniqueName release];
     [sheetName release];
+    [sheetImage release];
     [frames release];
     [oldSpriteFrame release];
     sprite = nil;
@@ -182,7 +184,9 @@
 #endif
 }
 ////////////////////////////////////////////////////////////////////////////////
--(id) initWithDictionary:(NSDictionary*)dictionary onSprite:(LHSprite*)spr sceneName:(NSString*)scene{
+-(id) initWithDictionary:(NSDictionary*)dictionary
+                onSprite:(LHSprite*)spr
+               sceneName:(NSString*)scene{
 
     self = [super init];
     if (self != nil)
@@ -194,6 +198,10 @@
         shSceneName = [[NSString alloc] initWithString:scene];
         uniqueName = [[NSString alloc] initWithString:[dictionary stringForKey:@"UniqueName"]];
         sheetName = [[NSString alloc] initWithString:[dictionary stringForKey:@"SheetName"]];
+        sheetImage = [[NSString alloc] initWithString:[dictionary stringForKey:@"SheetImage"]];
+        
+        
+        
         restoreOriginalFrame = [dictionary boolForKey:@"RestoreOriginalFrame"];
         repetitions = [dictionary intForKey:@"Repetitions"];
         delayPerUnit = [dictionary floatForKey:@"DelayPerUnit"];

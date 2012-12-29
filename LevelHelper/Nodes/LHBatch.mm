@@ -48,7 +48,9 @@ static int untitledBatchCount = 0;
 ////////////////////////////////////////////////////////////////////////////////
 -(void) dealloc{		
     
-  //  CCLOG(@"LH Batch Dealloc %@", uniqueName);
+//    CCLOG(@"LH Batch Dealloc %@", uniqueName);
+  
+    [[CCTextureCache sharedTextureCache] removeTexture:[self texture]];
     
 #ifndef LH_ARC_ENABLED
     [uniqueName release];
@@ -131,6 +133,8 @@ static int untitledBatchCount = 0;
         imagePath = [[NSString alloc] initWithString:imgPath];
         
         zOrder_ = [dictionary intForKey:@"ZOrder"];
+        
+        [self setTag:[dictionary intForKey:@"Tag"]];
         
         if(layer){
             [layer addChild:self z:[self zOrder]];
