@@ -46,6 +46,31 @@
 	self.position = ccpSub(self.position, ccp(_speed*dt, 0));
 }
 
+-(NSArray*)collisionsWith:(CCNode*)targetNode tag:(int)tag {
+
+	NSMutableArray* collisions = [[[NSMutableArray alloc] init] autorelease];
+
+	CGRect targetRect = CGRectMake(targetNode.position.x - self.position.x,
+									targetNode.position.y - self.position.y,
+									targetNode.boundingBox.size.width,
+									targetNode.boundingBox.size.height);
+
+	for(CCNode* node in self.children) {
+		if(node.tag == tag) {
+			
+			//DebugLog(@"Checking an obstacle for collisions");
+			
+			if(CGRectIntersectsRect(node.boundingBox, targetRect)) {
+			
+				[collisions addObject:node];
+				//DebugLog(@"INTERSECTION with tag=%d, target.y = %f, node.y = %f!", node.tag, targetNode.position.y, node.position.y);
+			}
+		}
+	}
+
+	return collisions;
+}
+
 -(void)addNode:(CCNode*)node parallaxRatio:(CGPoint)ratio {
 	node.position = ccp(node.position.x - self.position.x, node.position.y);
 	[self addChild:node z:2];

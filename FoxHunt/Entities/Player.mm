@@ -7,8 +7,6 @@
 //
 
 #import "Player.h"
-#import "Bystander.h"
-#import "Obstacle.h"
 
 @implementation Player
 
@@ -158,56 +156,40 @@
 	}
 }
 
--(void) onBystanderCollision:(LHContactInfo*)contact {
-	LHSprite* playerSprite = [contact spriteA];
-	LHSprite* bystanderSprite = [contact spriteB];
+-(void) onBystanderCollision:(Bystander*)bystander {
 
-	if(playerSprite != nil && bystanderSprite != nil) {
-		if(contact.contactType == LH_BEGIN_CONTACT) {
+	if(![bystander isAlive]) {
+		return;
+	}
+
+	//TODO: differentiate between coins and baddies in another method
+	//if we land on top of baddies - kill them!
+	if(_sprite.body != NULL && _sprite.body->GetLinearVelocity().y < 0) {
+
+		//kill the baddie
+		[bystander setNeedsToDie];
+
+		_canDash = true;
+		_dashImpulseUp = [ConfigManager doubleForKey:CONFIG_PLAYER_DASH_IMPULSE_UP];
+		_dashImpulseDown = [ConfigManager doubleForKey:CONFIG_PLAYER_DASH_IMPULSE_DOWN];
 		
-			Bystander* bystander = (Bystander*)bystanderSprite.userData;
-			if(![bystander isAlive]) {
-				return;
-			}
+		_sprite.body->SetLinearVelocity(b2Vec2(_sprite.body->GetLinearVelocity().x, 0));
+		_sprite.body->ApplyLinearImpulse(
+				b2Vec2(0,[ConfigManager doubleForKey:CONFIG_PLAYER_OBSTACLE_BOUNCE_IMPULSE]),
+			_sprite.body->GetWorldCenter()
+		);				
 		
-			//TODO: differentiate between coins and baddies in another method
-			//if we land on top of baddies - kill them!
-			if(bystanderSprite.position.y < playerSprite.position.y) {
-
-				//kill the baddie
-				[bystander setNeedsToDie];
-
-				_canDash = true;
-				_dashImpulseUp = [ConfigManager doubleForKey:CONFIG_PLAYER_DASH_IMPULSE_UP];
-				_dashImpulseDown = [ConfigManager doubleForKey:CONFIG_PLAYER_DASH_IMPULSE_DOWN];
-				
-				_sprite.body->SetLinearVelocity(b2Vec2(_sprite.body->GetLinearVelocity().x, 0));
-				_sprite.body->ApplyLinearImpulse(
-						b2Vec2(0,[ConfigManager doubleForKey:CONFIG_PLAYER_OBSTACLE_BOUNCE_IMPULSE]),
-					_sprite.body->GetWorldCenter()
-				);				
-				
-			}
-		}
 	}
 }
 
--(void) onObstacleCollision:(LHContactInfo*)contact {
-	LHSprite* playerSprite = [contact spriteA];
-	LHSprite* obstacleSprite = [contact spriteB];
+-(void) onObstacleCollision:(Obstacle*)obstacle {
 
-	if(playerSprite != nil && obstacleSprite != nil) {
-		if(contact.contactType == LH_BEGIN_CONTACT) {
-		
-			Obstacle* obstacle = (Obstacle*)obstacleSprite.userData;
-			if(![obstacle isAlive]) {
-				return;
-			}
-			
-			//boooo we die
-			_needsToDie = true;
-		}
+	if(![obstacle isAlive]) {
+		return;
 	}
+	
+	//boooo we die
+	_needsToDie = true;
 }
 
 -(void) onCoinCollision:(LHContactInfo*)contact {

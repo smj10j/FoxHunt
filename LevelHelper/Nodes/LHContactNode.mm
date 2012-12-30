@@ -416,7 +416,7 @@ void lhContact_CallBeginEndSolveMethod(void* object,
 }
 
 -(void) beginEndContact:(b2Contact*)contact isBegin:(bool)isBegin{
-    
+    	
     b2Fixture* fixA = contact->GetFixtureA();
     b2Fixture* fixB = contact->GetFixtureB();
 

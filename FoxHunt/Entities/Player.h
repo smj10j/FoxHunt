@@ -13,6 +13,9 @@
 #import "LevelHelperLoader.h"
 #import "CCPhysicsSprite.h"
 
+#import "Bystander.h"
+#import "Obstacle.h"
+
 @interface Player : NSObject {
 
 	LHSprite* _sprite;
@@ -53,8 +56,8 @@
 -(bool)isAlive;
 
 -(void) onGroundCollision:(LHContactInfo*)contact;
--(void) onObstacleCollision:(LHContactInfo*)contact;
--(void) onBystanderCollision:(LHContactInfo*)contact;
+-(void) onObstacleCollision:(Obstacle*)obstacle;
+-(void) onBystanderCollision:(Bystander*)bystander;
 -(void) onCoinCollision:(LHContactInfo*)contact;
 
 -(void)run;

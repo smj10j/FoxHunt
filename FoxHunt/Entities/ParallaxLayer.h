@@ -11,7 +11,8 @@
 #import <list>
 using namespace std;
 
-@interface ParallaxLayer : CCLayer {
+//can be a CCLayer if LevelHelper collisions are not being used
+@interface ParallaxLayer : LHLayer {
 
 	double _lifetime;
 
@@ -36,6 +37,9 @@ using namespace std;
 -(void)pushBackgroundNode:(CCNode*)node parallaxRatio:(CGPoint)ratio;
 
 -(bool)isNodeVisible:(CCNode*)node;
+
+-(NSArray*)collisionsWith:(CCNode*)targetNode tag:(int)tag;
+
 
 -(void)dealloc;
 

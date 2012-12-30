@@ -48,7 +48,6 @@
 	ParallaxLayer* parallaxLayer = (ParallaxLayer*)_sprite.parent;
 	
 	if(![parallaxLayer isNodeVisible:_sprite]) {
-		DebugLog(@"Removing obstacle");
 		[_sprite runAction:[CCSequence actions:
 					[CCDelayTime actionWithDuration:0.50f],
 					[CCCallBlock actionWithBlock:^{

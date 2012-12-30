@@ -98,7 +98,7 @@
 			_obstacles.push_back(obstacle);
 		}
 
-//TODO: parallax is SLOOOOOOOWWWWW
+//TODO: collisions are not working with the custom parallax node
 
 		//create bystanders
 		for(int i = 0; i < 10; i++) {
@@ -133,22 +133,6 @@
 															andTagB:GROUND
 				idListener:_player
 				selListener:@selector(onGroundCollision:)];
-				
-	[_levelLoader registerBeginOrEndCollisionCallbackBetweenTagA:PLAYER
-															andTagB:OBSTACLE
-				idListener:_player
-				selListener:@selector(onObstacleCollision:)];
-				
-	[_levelLoader registerBeginOrEndCollisionCallbackBetweenTagA:PLAYER
-															andTagB:BYSTANDER
-				idListener:_player
-				selListener:@selector(onBystanderCollision:)];
-				
-				
-	[_levelLoader registerBeginOrEndCollisionCallbackBetweenTagA:PLAYER
-															andTagB:COIN
-				idListener:_player
-				selListener:@selector(onCoinCollision:)];
 }
 
 -(void) initPhysics {
@@ -233,6 +217,16 @@
             }
             
         }
+	}
+	
+	//obstacle collisions
+	for(CCNode* node in [_parallaxLayer collisionsWith:_player.sprite tag:OBSTACLE]) {
+		[_player onObstacleCollision:(Obstacle*)node.userData];
+	}
+	
+	//bystander collisions
+	for(CCNode* node in [_parallaxLayer collisionsWith:_player.sprite tag:BYSTANDER]) {
+		[_player onBystanderCollision:(Bystander*)node.userData];
 	}
 	
 	//tell the player to update itself
