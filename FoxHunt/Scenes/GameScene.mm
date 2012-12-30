@@ -148,7 +148,22 @@
 }
 
 
--(void) draw {
+-(void)draw {
+
+	if(DEBUG_COLLISIONS) {
+	
+		double scalar = [ConfigManager doubleForKey:CONFIG_PLAYER_BOUNDING_BOX_SCALAR];
+		ccColor4F color = ccc4f(.3, 1, .3, 1);
+
+
+		CGSize size = CGSizeMake(_player.sprite.boundingBox.size.width*scalar,
+						_player.sprite.boundingBox.size.height*scalar);
+
+		ccDrawSolidRect(ccp(_player.sprite.position.x - size.width/2, _player.sprite.position.y - size.height/2),
+			ccp(_player.sprite.position.x  + size.width/2, _player.sprite.position.y + size.height/2),
+			color);
+	}
+	
 	[super draw];
 }
 
@@ -300,7 +315,15 @@
 
 	[self unscheduleUpdate];
 	
-	[[CCDirector sharedDirector] replaceScene:[CCTransitionFadeBL transitionWithDuration:0.5 scene:[GameScene scene]]];
+	[self runAction:[CCSequence actions:
+			[CCDelayTime actionWithDuration:2.0f],
+			[CCCallBlock actionWithBlock:^{
+
+				[[CCDirector sharedDirector] replaceScene:[CCTransitionFadeBL transitionWithDuration:0.5 scene:[GameScene scene]]];
+
+			}],
+	 nil]];
+	
 }
 
 

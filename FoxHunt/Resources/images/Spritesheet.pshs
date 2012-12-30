@@ -492,62 +492,6 @@
 								<key>Width</key>
 								<real>105</real>
 							</dict>
-							<dict>
-								<key>Angle</key>
-								<integer>0</integer>
-								<key>Category</key>
-								<integer>1</integer>
-								<key>Density</key>
-								<real>0.20000000298023224</real>
-								<key>Fixture</key>
-								<array>
-									<array>
-										<string>{-16.76315573924019, -18.937904658018994}</string>
-										<string>{9.8554080416530496, -18.937904658018994}</string>
-										<string>{9.8554080416530496, -12.022019686024279}</string>
-										<string>{-16.76315573924019, -12.022019686024279}</string>
-									</array>
-								</array>
-								<key>Friction</key>
-								<real>0.20000000298023224</real>
-								<key>Group</key>
-								<integer>0</integer>
-								<key>Height</key>
-								<real>120</real>
-								<key>HolesPoints</key>
-								<array/>
-								<key>IsCircle</key>
-								<false/>
-								<key>IsRectangle</key>
-								<true/>
-								<key>IsSensor</key>
-								<true/>
-								<key>LHHeight</key>
-								<real>30</real>
-								<key>LHShapePositionOffset</key>
-								<string>{-16.125, -14.5}</string>
-								<key>LHWidth</key>
-								<real>26.25</real>
-								<key>Mask</key>
-								<integer>65535</integer>
-								<key>Name</key>
-								<string>UntitledFixture_1</string>
-								<key>Restitution</key>
-								<real>0.20000000298023224</real>
-								<key>ShapePoints</key>
-								<array>
-									<string>{-2.5526229569607608, 106.08807874409712}</string>
-									<string>{103.9216321666122, 106.08807874409712}</string>
-									<string>{103.9216321666122, 133.75161863207597}</string>
-									<string>{-2.5526229569607608, 133.75161863207597}</string>
-								</array>
-								<key>ShapePositionOffset</key>
-								<string>{0, 0}</string>
-								<key>Tag</key>
-								<integer>0</integer>
-								<key>Width</key>
-								<real>105</real>
-							</dict>
 						</array>
 						<key>Type</key>
 						<integer>2</integer>
