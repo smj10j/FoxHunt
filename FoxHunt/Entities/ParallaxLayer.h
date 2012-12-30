@@ -7,12 +7,10 @@
 //
 
 #import "Common.h"
-#import "LevelHelperLoader.h"
 #import <list>
 using namespace std;
 
-//can be a CCLayer if LevelHelper collisions are not being used
-@interface ParallaxLayer : LHLayer {
+@interface ParallaxLayer : CCLayer {
 
 	double _lifetime;
 
