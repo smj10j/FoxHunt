@@ -98,8 +98,6 @@
 			_obstacles.push_back(obstacle);
 		}
 
-//TODO: collisions are not working with the custom parallax node
-
 		//create bystanders
 		for(int i = 0; i < 10; i++) {
 			LHSprite* bystanderSprite = [_levelLoader createBatchSpriteWithName:@"object_sleepingcat" fromSheet:@"Obstacles" fromSHFile:@"Spritesheet" tag:BYSTANDER];
@@ -260,11 +258,11 @@
 	
 	
 	//generate random bystanders
-	if((int)(_lifetime*10)%10 == 0 && arc4random_uniform(1000) < 200) {
+	if((int)(_lifetime*10)%10 == 0 && arc4random_uniform(1000) < 300) {
 		[self addBystander];
 	}
 	//generate random obstacles
-	if((int)(_lifetime*10)%10 == 0 && arc4random_uniform(1000) < 200) {
+	if((int)(_lifetime*10)%10 == 0 && arc4random_uniform(1000) < 300) {
 		[self addObstacle];
 	}
 		

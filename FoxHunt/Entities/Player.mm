@@ -227,23 +227,19 @@
 			dashImpulse = _dashImpulseDown;
 		}
 		
+		//we haaaave lifffttoooofff!
+		_sprite.body->SetLinearVelocity(b2Vec2(0,0));
 		_sprite.body->ApplyLinearImpulse(
 				b2Vec2(direction.x*dashImpulse,
 						direction.y*dashImpulse),
 			_sprite.body->GetWorldCenter()
 		);
 
+		//fly animation
 		[_sprite prepareAnimationNamed:[_sprite.animationName stringByReplacingOccurrencesOfString:@"_run" withString:@"_fly"]  fromSHScene:_sprite.animationSHScene];
-		
 		[_sprite playAnimation];
 		
-		//dash once when in the air
-		if(_isOnGround) {
-			_isOnGround = false;
-		}else {
-			//_canDash = false;
-		}
-		
+		_isOnGround = false;
 	}
 }
 
