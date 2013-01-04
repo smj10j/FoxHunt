@@ -1,13 +1,13 @@
 //
 //  GameScene.mm
-//  Outlaw
+//  FoxHunt
 //
 //  Created by Stephen Johnson on 12/23/12.
 //  Copyright Conquer LLC 2012. All rights reserved.
 //
 
 #import "GameScene.h"
-
+#import "MainMenuLayer.h"
 
 @implementation GameScene
 
@@ -75,7 +75,6 @@
 
 
 		//setup parallax
-
 		_parallaxLayer = [[ParallaxLayer alloc] init];
 		_parallaxLayer.position = ccp(0, winSize.height/2);
 		[_mainLayer addChild:_parallaxLayer];
@@ -86,7 +85,7 @@
 			[parallaxBg transformPosition:ccp(parallaxBg.boundingBox.size.width*i,0)];
 			[_parallaxLayer pushBackgroundNode:parallaxBg parallaxRatio:ccp(1,0)];
 		}
-		
+
 		//create obstacles
 		for(int i = 0; i < 10; i++) {
 			LHSprite* obstacleSprite = [_levelLoader createBatchSpriteWithName:@"object_sleepingdog" fromSheet:@"Obstacles" fromSHFile:@"Spritesheet" tag:OBSTACLE];
@@ -111,6 +110,12 @@
 
 		[self setupPlayer];
 		
+		//TESTING!!!
+		MainMenuLayer* mml = [MainMenuLayer node];
+		mml.position = ccp(0,0);
+		mml.zOrder = 1000;
+		[self addChild:mml];
+		
 		_state = RUNNING;
 		[self scheduleUpdate];
 	}
@@ -128,9 +133,9 @@
 	
 	
 	[_levelLoader registerBeginOrEndCollisionCallbackBetweenTagA:PLAYER
-															andTagB:GROUND
-				idListener:_player
-				selListener:@selector(onGroundCollision:)];
+														andTagB:GROUND
+														idListener:_player
+														selListener:@selector(onGroundCollision:)];
 }
 
 -(void) initPhysics {
@@ -157,8 +162,11 @@
 		CGSize size = CGSizeMake(_player.sprite.boundingBox.size.width*scalar,
 						_player.sprite.boundingBox.size.height*scalar);
 
-		ccDrawSolidRect(ccp(_player.sprite.position.x - size.width/2, _player.sprite.position.y - size.height/2),
-			ccp(_player.sprite.position.x  + size.width/2, _player.sprite.position.y + size.height/2),
+		ccDrawSolidRect(
+			ccp(_player.sprite.position.x - size.width/2,
+				_player.sprite.position.y - size.height/2),
+			ccp(_player.sprite.position.x  + size.width/2,
+				_player.sprite.position.y + size.height/2),
 			color);
 	}
 	
@@ -242,6 +250,11 @@
 		[_player onBystanderCollision:(Bystander*)node.userData];
 	}
 	
+	//TODO: put t his in the player class
+	if(_numTouchesOnScreen > 0) {
+		[_player jump];
+	}
+		
 	//tell the player to update itself
 	[_player update:dt];
 	
@@ -336,21 +349,25 @@
 	
 		_lastTouchStart = location;
 	}
+	
 }
 
 - (void)ccTouchesMoved:(NSSet *)touches withEvent:(UIEvent *)event {
-
+	
 
 }
 
 
 - (void)ccTouchesEnded:(NSSet *)touches withEvent:(UIEvent *)event {
 
+
 	_numTouchesOnScreen-= [touches count];
 	if(_numTouchesOnScreen <= 0) {
 		_numTouchesOnScreen = 0;
 	}
 
+	[_player fly:ccp(0,0)];
+/*
 	for( UITouch *touch in touches ) {
 		CGPoint location = [touch locationInView: [touch view]];
 		
@@ -372,7 +389,7 @@
 				_targetParallaxSpeed+= dashVector.x*[ConfigManager intForKey:CONFIG_PARALLAX_SPEED_ADJUSTMENT_FACTOR];
 			}
 		}
-	}
+*/
 }
 
 

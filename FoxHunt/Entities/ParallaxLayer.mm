@@ -53,8 +53,11 @@
 				size = CGSizeMake(node.boundingBox.size.width*scalar,
 								node.boundingBox.size.height*scalar);
 
-				ccDrawSolidRect(ccp(node.position.x - size.width/2, node.position.y - size.height/2),
-					ccp(node.position.x  + size.width/2, node.position.y + size.height/2),
+				ccDrawSolidRect(
+					ccp(node.position.x - size.width/2,
+						node.position.y - size.height/2),
+					ccp(node.position.x  + size.width/2,
+						node.position.y + size.height/2),
 					color);
 			}
 	

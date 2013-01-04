@@ -29,6 +29,10 @@
 		_needsToDie = false;
 		_isDying = false;
 		
+		_canJump = true;
+		_isJumping = false;
+		_jumpImpulse = [ConfigManager doubleForKey:CONFIG_PLAYER_JUMP_IMPULSE_INITIAL];
+		
 		_isDashing = false;
 		_isOnGround = false;
 		_canDash = true;
@@ -60,6 +64,7 @@
 	b2Vec2 v = _sprite.body->GetLinearVelocity();
 	if(v.x < 0.5 && v.y < 0.5) {
 		_isDashing = false;
+		//DebugLog(@"STOPPED DASHING!");
 	}
 	
 	//lock to a fixed position
@@ -143,6 +148,10 @@
 	if(playerSprite != nil) {
 		if(contact.contactType == LH_BEGIN_CONTACT) {
 			_isOnGround = true;
+			_isJumping = false;
+			_canJump = true;
+			_jumpImpulse = [ConfigManager doubleForKey:CONFIG_PLAYER_JUMP_IMPULSE_INITIAL];
+	
 			_canDash = true;
 			_dashImpulseUp = [ConfigManager doubleForKey:CONFIG_PLAYER_DASH_IMPULSE_UP];
 			_dashImpulseDown = [ConfigManager doubleForKey:CONFIG_PLAYER_DASH_IMPULSE_DOWN];
@@ -221,6 +230,7 @@
 	if(_isAlive && !_needsToDie && _canDash) {
 		DebugLog(@"DASH!! direction = %f,%f", direction.x, direction.y);
 		_isDashing = true;
+		_isOnGround = false;
 		
 		double dashImpulse = _dashImpulseUp;
 		if(direction.y < 0) {
@@ -236,11 +246,40 @@
 		);
 
 		//fly animation
-		[_sprite prepareAnimationNamed:[_sprite.animationName stringByReplacingOccurrencesOfString:@"_run" withString:@"_fly"]  fromSHScene:_sprite.animationSHScene];
+		[_sprite prepareAnimationNamed:[_sprite.animationName stringByReplacingOccurrencesOfString:@"_run" withString:@"_fly"]
+			fromSHScene:_sprite.animationSHScene];
 		[_sprite playAnimation];
 		
-		_isOnGround = false;
 	}
+}
+
+-(void)jump {
+	if(_isAlive && !_needsToDie && _canJump) {
+		DebugLog(@"JUMP!!");
+		_isOnGround = false;
+		
+		if(_isJumping) {
+			_jumpImpulse+= [ConfigManager doubleForKey:CONFIG_PLAYER_JUMP_IMPULSE_STEP];
+		}
+		_isJumping = true;
+
+		//we haaaave lifffttoooofff!
+		_sprite.body->SetLinearVelocity(b2Vec2(0,0));
+		_sprite.body->ApplyLinearImpulse(
+				b2Vec2(0,_jumpImpulse),
+			_sprite.body->GetWorldCenter()
+		);
+
+		//fly animation
+		[_sprite prepareAnimationNamed:[_sprite.animationName stringByReplacingOccurrencesOfString:@"_run" withString:@"_fly"]
+			fromSHScene:_sprite.animationSHScene];
+		[_sprite playAnimation];
+		
+	}
+}
+
+-(void)fly:(CGPoint)direction {
+	_canJump = false;
 }
 
 -(void)dealloc {

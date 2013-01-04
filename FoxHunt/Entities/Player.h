@@ -28,6 +28,10 @@
 	
 	bool _isMoving;
 	
+	bool _canJump;
+	bool _isJumping;
+	float _jumpImpulse;
+	
 	bool _canDash;
 	bool _isDashing;
 	float _dashImpulseUp;
@@ -47,23 +51,22 @@
 
 -(id)initWithSprite:(LHSprite*)sprite;
 
--(void)update:(ccTime)dt;
-
-
 -(LHSprite*)sprite;
 -(bool)isOnGround;
 -(bool)isDashing;
 -(bool)isAlive;
 
--(void) onGroundCollision:(LHContactInfo*)contact;
--(void) onObstacleCollision:(Obstacle*)obstacle;
--(void) onBystanderCollision:(Bystander*)bystander;
--(void) onCoinCollision:(LHContactInfo*)contact;
+-(void)update:(ccTime)dt;
+-(void)onGroundCollision:(LHContactInfo*)contact;
+-(void)onObstacleCollision:(Obstacle*)obstacle;
+-(void)onBystanderCollision:(Bystander*)bystander;
+-(void)onCoinCollision:(LHContactInfo*)contact;
 
 -(void)run;
 -(void)stop;
 -(void)dash:(CGPoint)direction;
-
+-(void)jump;
+-(void)fly:(CGPoint)direction;
 
 -(void)dealloc;
 

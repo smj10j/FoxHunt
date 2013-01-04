@@ -1,6 +1,6 @@
 //
 //  GameScene.h
-//  Outlaw
+//  FoxHunt
 //
 //  Created by Stephen Johnson on 12/23/12.
 //  Copyright Conquer LLC 2012. All rights reserved.
@@ -55,7 +55,6 @@ enum GAME_STATE {
 	Player* _player;
 }
 
-// returns a CCScene that contains the HelloWorldLayer as the only child
 +(CCScene *) scene;
 
 
